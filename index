@@ -1,846 +1,623 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>책임 인생게임</title>
-<style>
-  :root{
-    --ink:#111111;
-    --bg:#F2EFE9;
-    --yellow:#FFD500;
-    --pink:#FF6EC7;
-    --cyan:#00E5FF;
-    --lime:#B6FF3B;
-    --red:#FF4B3E;
-    --purple:#B69CFF;
-    --shadow-off: 6px;
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
-  body{
-    background:var(--bg);
-    background-image:
-      linear-gradient(var(--ink) 1px, transparent 1px),
-      linear-gradient(90deg, var(--ink) 1px, transparent 1px);
-    background-size: 28px 28px;
-    background-position: -1px -1px;
-    color:var(--ink);
-    font-family: "Pretendard","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
-    min-height:100vh;
-  }
-  .wrap{
-    max-width:920px;
-    margin:0 auto;
-    padding:20px 16px 60px;
-  }
-  .brutal{
-    background:#fff;
-    border:4px solid var(--ink);
-    box-shadow: var(--shadow-off) var(--shadow-off) 0 var(--ink);
-  }
-  .btn{
-    display:inline-block;
-    font-weight:900;
-    font-size:16px;
-    padding:14px 20px;
-    background:var(--yellow);
-    border:4px solid var(--ink);
-    box-shadow: var(--shadow-off) var(--shadow-off) 0 var(--ink);
-    cursor:pointer;
-    color:var(--ink);
-    text-align:center;
-    transition: transform .08s ease;
-    user-select:none;
-  }
-  .btn:active{
-    transform: translate(4px,4px);
-    box-shadow: 2px 2px 0 var(--ink);
-  }
-  .btn.pink{background:var(--pink);}
-  .btn.cyan{background:var(--cyan);}
-  .btn.lime{background:var(--lime);}
-  .btn.red{background:var(--red); color:#fff;}
-  .btn:disabled{opacity:.35; cursor:not-allowed;}
-  .btn.full{display:block; width:100%; margin-bottom:12px;}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>민준이의 하루 — 합리적 선택 시뮬레이션</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  h1{
-    font-size:34px;
-    font-weight:900;
-    margin:10px 0 4px;
-    letter-spacing:-0.5px;
-    text-transform:uppercase;
-  }
-  h2{
-    font-size:22px;
-    font-weight:900;
-    text-transform:uppercase;
-    margin:0 0 14px;
-    background:var(--ink);
-    color:#fff;
-    display:inline-block;
-    padding:4px 10px;
-    transform:rotate(-1deg);
-  }
-  .tag{
-    display:inline-block;
-    font-size:11px;
-    font-weight:900;
-    text-transform:uppercase;
-    background:var(--ink);
-    color:#fff;
-    padding:3px 8px;
-    margin:2px 4px 2px 0;
-    transform:rotate(-2deg);
-  }
-  .tag.warn{background:var(--red);}
-  .card-panel{
-    padding:22px;
-    margin-bottom:18px;
-    transform:rotate(-0.4deg);
-  }
-  .subtle{opacity:.75; font-size:14px; font-weight:600;}
+    :root {
+      --font-sans: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+      --bg:          #ffffff;
+      --bg-sec:      #f5f5f4;
+      --bg-ter:      #e7e5e4;
+      --text:        #1c1917;
+      --text-sec:    #57534e;
+      --text-ter:    #a8a29e;
+      --border:      #d6d3d1;
+      --border-sec:  #a8a29e;
+      --radius-sm:   6px;
+      --radius-md:   10px;
+      --radius-lg:   14px;
+      --blue:        #185FA5;
+      --blue-light:  #E6F1FB;
+      --green:       #3B6D11;
+      --green-light: #EAF3DE;
+      --red:         #A32D2D;
+      --red-light:   #FCEBEB;
+      --amber:       #854F0B;
+      --amber-light: #FAEEDA;
+      --purple:      #534AB7;
+      --purple-light:#EEEDFE;
+    }
 
-  /* header / gauges */
-  header.top{
-    padding:14px 16px;
-    margin-bottom:20px;
-  }
-  .charrow{display:flex; align-items:center; gap:12px; margin-bottom:14px;}
-  .avatar{
-    font-size:34px;
-    width:56px;height:56px;
-    display:flex;align-items:center;justify-content:center;
-    background:var(--lime);
-    border:4px solid var(--ink);
-    box-shadow:4px 4px 0 var(--ink);
-  }
-  .progresswrap{font-size:12px; font-weight:900; margin-left:auto; text-align:right;}
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg-sec);
+      color: var(--text);
+      min-height: 100dvh;
+      display: flex;
+      justify-content: center;
+      padding: 1.5rem 1rem 3rem;
+    }
 
-  .gauges{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
-  .gauge{position:relative;}
-  .gauge-label{
-    display:flex; justify-content:space-between;
-    font-weight:900; font-size:13px; text-transform:uppercase; margin-bottom:6px;
-  }
-  .gauge-track{
-    position:relative;
-    height:26px;
-    background:#fff;
-    border:4px solid var(--ink);
-    overflow:visible;
-  }
-  .gauge-fill{
-    height:100%;
-    width:50%;
-    background:var(--cyan);
-    transition: width .7s cubic-bezier(.2,.9,.2,1.2);
-    position:relative;
-  }
-  .gauge.ri .gauge-fill{background:var(--pink);}
-  .gauge-track.shake{ animation: shakeX .4s; }
-  @keyframes shakeX{
-    0%,100%{transform:translateX(0);}
-    20%{transform:translateX(-6px);}
-    40%{transform:translateX(6px);}
-    60%{transform:translateX(-4px);}
-    80%{transform:translateX(4px);}
-  }
-  .gauge-track.flashpos{ animation: flashG .5s; }
-  .gauge-track.flashneg{ animation: flashR .5s; }
-  @keyframes flashG{ 0%{background:var(--lime);} 100%{background:#fff;} }
-  @keyframes flashR{ 0%{background:var(--red);} 100%{background:#fff;} }
+    .wrap {
+      width: 100%;
+      max-width: 640px;
+      position: relative;
+    }
 
-  .popup{
-    position:absolute;
-    right:6px; top:-6px;
-    font-weight:900;
-    font-size:16px;
-    padding:2px 8px;
-    border:3px solid var(--ink);
-    background:var(--yellow);
-    box-shadow:3px 3px 0 var(--ink);
-    animation: floatUp 1.1s ease forwards;
-    pointer-events:none;
-    z-index:5;
-  }
-  .popup.neg{background:var(--red); color:#fff;}
-  @keyframes floatUp{
-    0%{ transform:translateY(0) scale(1); opacity:1; }
-    70%{ transform:translateY(-30px) scale(1.1); opacity:1; }
-    100%{ transform:translateY(-42px) scale(1); opacity:0; }
-  }
+    /* ── screens ── */
+    .scr { display: none; }
+    .scr.on { display: block; }
 
-  /* board */
-  .board{
-    display:flex;
-    flex-wrap:wrap;
-    gap:8px;
-    margin-bottom:18px;
-  }
-  .tile{
-    width:58px;height:58px;
-    display:flex;align-items:center;justify-content:center;
-    font-weight:900; font-size:11px;
-    background:#fff;
-    border:3px solid var(--ink);
-    position:relative;
-    text-align:center;
-  }
-  .tile.done{background:var(--lime);}
-  .tile.now{background:var(--yellow); box-shadow:4px 4px 0 var(--ink); transform:scale(1.08);}
-  .tile .token{position:absolute; top:-14px; font-size:20px;}
+    /* ── card ── */
+    .card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: .875rem;
+    }
 
-  .dice-face{
-    font-size:64px; line-height:1; margin:8px 0 16px;
-    display:inline-block;
-  }
-  .dice-face.landed{ animation: diceLand .4s; }
-  @keyframes diceLand{
-    0%{ transform:scale(1.4) rotate(-8deg); }
-    60%{ transform:scale(0.9) rotate(4deg); }
-    100%{ transform:scale(1) rotate(0deg); }
-  }
-  .dice-result{
-    font-weight:900; font-size:13px; text-transform:uppercase;
-    background:var(--yellow); border:3px solid var(--ink);
-    display:inline-block; padding:4px 10px; margin-bottom:10px;
-  }
-  .evlist{ list-style:none; padding:0; margin:0 0 4px; }
-  .evlist .ev{
-    padding:9px 11px; margin-bottom:7px; font-weight:700; font-size:13.5px;
-    border:3px solid var(--ink);
-  }
-  .evlist .ev.support{ background:#E9FBD3; }
-  .evlist .ev.against{ background:#FFE3DC; }
-  .evlist .ev.locked{ background:#eee; color:#888; font-style:italic; border-style:dashed; }
+    /* ── buttons ── */
+    .btn {
+      display: block;
+      width: 100%;
+      padding: .75rem 1.5rem;
+      font-family: var(--font-sans);
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: background .15s, opacity .15s;
+      text-align: center;
+      border: none;
+    }
+    .btn-primary { background: var(--blue); color: var(--blue-light); }
+    .btn-primary:hover { opacity: .88; }
+    .btn-sec { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+    .btn-sec:hover { background: var(--bg-sec); }
+    .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 1rem; }
 
-  .choicegrid{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:16px;}
-  @media (max-width:560px){ .choicegrid{grid-template-columns:1fr;} .gauges{grid-template-columns:1fr;} }
+    /* ── gauge ── */
+    .gauge-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1rem; }
+    .gauge-box { background: var(--bg-sec); border-radius: var(--radius-md); padding: .75rem 1rem; }
+    .gauge-label { font-size: 12px; color: var(--text-sec); margin-bottom: 6px; display: flex; justify-content: space-between; }
+    .gauge-val { font-weight: 600; color: var(--text); }
+    .gauge-track { height: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 5px; overflow: hidden; }
+    .gauge-fill { height: 10px; border-radius: 5px; transition: width .55s cubic-bezier(.4,0,.2,1); }
+    .gauge-budget { background: #378ADD; }
+    .gauge-satisfy { background: #639922; }
 
-  .outcome-badge{
-    display:inline-block; font-weight:900; font-size:20px;
-    padding:6px 14px; margin-bottom:10px;
-    border:4px solid var(--ink); transform:rotate(-2deg);
-  }
-  .outcome-badge.success{background:var(--lime);}
-  .outcome-badge.fail{background:var(--red); color:#fff;}
+    /* ── step dots ── */
+    .dots { display: flex; gap: 6px; justify-content: center; margin-bottom: 1.25rem; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bg-ter); border: 1px solid var(--border); transition: all .2s; }
+    .dot.done { background: #378ADD; border-color: #378ADD; }
+    .dot.cur  { width: 20px; border-radius: 4px; background: var(--blue); border-color: var(--blue); }
 
-  select, textarea{
-    width:100%;
-    font-family:inherit;
-    font-size:15px;
-    font-weight:700;
-    padding:12px;
-    border:4px solid var(--ink);
-    background:#fff;
-    box-shadow:4px 4px 0 var(--ink);
-  }
-  textarea{resize:vertical; min-height:80px;}
+    /* ── scene header ── */
+    .scene-header { display: flex; align-items: center; gap: 12px; margin-bottom: 1rem; }
+    .scene-icon { width: 48px; height: 48px; border-radius: var(--radius-md); background: var(--bg-sec); display: flex; align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0; }
+    .scene-num  { font-size: 12px; color: var(--text-ter); margin-bottom: 2px; }
+    .scene-title { font-size: 16px; font-weight: 600; }
+    .scene-story { font-size: 14px; color: var(--text-sec); line-height: 1.7; background: var(--bg-sec); border-radius: var(--radius-md); padding: .75rem 1rem; margin-bottom: 1rem; }
+    .choice-hint { font-size: 13px; font-weight: 500; color: var(--text-sec); margin-bottom: .5rem; }
 
-  .charpick{
-    display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:18px 0;
-  }
-  .charcard{
-    padding:16px 8px; text-align:center; cursor:pointer;
-    background:#fff; border:4px solid var(--ink);
-    box-shadow:5px 5px 0 var(--ink);
-    transition:transform .1s;
-  }
-  .charcard:hover{transform:translate(-2px,-2px);}
-  .charcard.sel{background:var(--yellow); transform:translate(3px,3px); box-shadow:2px 2px 0 var(--ink);}
-  .charcard .em{font-size:34px; display:block; margin-bottom:6px;}
-  .charcard .nm{font-weight:900; font-size:13px;}
+    /* ── choice cards ── */
+    .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .c-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1rem;
+      cursor: pointer;
+      position: relative;
+      transition: border-color .15s, background .15s;
+    }
+    .c-card:hover:not(.c-disabled):not(.c-good):not(.c-bad):not(.c-neutral) {
+      border-color: var(--border-sec);
+      background: var(--bg-sec);
+    }
+    .c-card.c-disabled { opacity: .35; cursor: not-allowed; background: var(--bg-sec); }
+    .c-card.c-good     { border: 2px solid var(--green); background: var(--green-light); pointer-events: none; }
+    .c-card.c-bad      { border: 2px solid var(--red);   background: var(--red-light);   pointer-events: none; }
+    .c-card.c-neutral  { opacity: .4; pointer-events: none; }
 
-  .hidden{display:none !important;}
+    .c-badge-no { position: absolute; top: 8px; right: 8px; background: var(--red-light); color: var(--red); font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: var(--radius-sm); }
+    .c-num   { font-size: 11px; font-weight: 600; color: var(--text-ter); margin-bottom: 5px; }
+    .c-name  { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 3px; line-height: 1.4; }
+    .c-price { font-size: 12px; font-weight: 600; margin-bottom: 8px; }
 
-  .endinghero{
-    text-align:center; padding:30px 20px; margin-bottom:18px;
-  }
-  .endinghero .em{font-size:64px; display:block;}
-  .endinghero h1{margin-top:8px;}
-  .statbar{display:flex; justify-content:center; gap:26px; margin:14px 0;}
-  .statbox{text-align:center;}
-  .statbox .num{font-size:30px; font-weight:900;}
-  .statbox .lab{font-size:12px; font-weight:800; text-transform:uppercase;}
+    /* ── attr bars ── */
+    .attrs { display: flex; flex-direction: column; gap: 4px; }
+    .attr-row { display: flex; align-items: center; gap: 6px; }
+    .attr-lbl { font-size: 11px; width: 36px; flex-shrink: 0; }
+    .attr-track { flex: 1; height: 5px; background: var(--bg-sec); border-radius: 3px; overflow: hidden; }
+    .attr-bar { height: 5px; border-radius: 3px; }
 
-  .reasonlist{list-style:none; padding:0; margin:0;}
-  .reasonlist li{
-    padding:10px 12px; margin-bottom:8px; border:3px solid var(--ink);
-    font-weight:700; font-size:14px; background:var(--bg);
-  }
-  .reasonlist li b{background:var(--yellow); padding:0 4px;}
+    /* ── result banner ── */
+    .result-banner { border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: .875rem; }
+    .result-banner.good { background: var(--green-light); border: 1px solid #97C459; }
+    .result-banner.bad  { background: var(--red-light);   border: 1px solid #F09595; }
+    .result-title { font-size: 15px; font-weight: 600; margin-bottom: .375rem; }
+    .good .result-title { color: var(--green); }
+    .bad  .result-title { color: var(--red); }
+    .result-body { font-size: 13px; line-height: 1.7; }
+    .good .result-body { color: #3B6D11; }
+    .bad  .result-body { color: var(--red); }
 
-  footer.credit{text-align:center; font-size:12px; opacity:.5; margin-top:30px; font-weight:700;}
-</style>
+    /* ── tags ── */
+    .tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: var(--radius-sm); margin: 2px; }
+    .tag-miss { background: #F7C1C1; color: var(--red); }
+    .tag-ok   { background: #C0DD97; color: var(--green); }
+
+    /* ── floating text ── */
+    .float-txt {
+      position: absolute;
+      pointer-events: none;
+      font-size: 14px;
+      font-weight: 600;
+      z-index: 9999;
+      white-space: nowrap;
+      transition: transform .9s ease-out, opacity .9s ease-out;
+    }
+
+    /* ── final screen ── */
+    .final-score { font-size: 52px; font-weight: 700; text-align: center; margin: 1rem 0 .25rem; }
+    .final-sub   { font-size: 14px; color: var(--text-sec); text-align: center; margin-bottom: .75rem; }
+    .title-badge { display: flex; justify-content: center; margin-bottom: 1.5rem; }
+    .title-badge-inner { padding: .6rem 1.5rem; border-radius: var(--radius-lg); font-size: 16px; font-weight: 700; border: 2px solid; }
+
+    .timeline-row { display: flex; gap: 10px; padding: .75rem 0; border-bottom: 1px solid var(--border); align-items: flex-start; }
+    .timeline-row:last-child { border: none; }
+    .tl-icon { width: 36px; height: 36px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .tl-ok  { background: var(--green-light); }
+    .tl-bad { background: var(--red-light); }
+    .tl-name  { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+    .tl-meta  { font-size: 12px; color: var(--text-sec); }
+    .tl-tags  { margin-top: 3px; }
+
+    .lesson-box { background: var(--bg-sec); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-top: .875rem; }
+    .lesson-label { font-size: 12px; font-weight: 600; color: var(--text-sec); margin-bottom: .5rem; }
+    .lesson-body  { font-size: 14px; line-height: 1.8; }
+
+    /* ── discussion screen ── */
+    .q-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: .75rem; }
+    .q-num { display: inline-block; background: var(--blue-light); color: var(--blue); font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: var(--radius-sm); margin-bottom: .5rem; }
+    .q-text { font-size: 15px; font-weight: 600; line-height: 1.6; margin-bottom: .5rem; }
+    .q-hint { font-size: 13px; color: var(--text-sec); line-height: 1.7; }
+    .teacher-box { background: var(--bg-sec); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem; }
+
+    /* ── intro badges ── */
+    .intro-stats { display: flex; justify-content: center; gap: 2rem; margin-bottom: 1.5rem; }
+    .stat-val { font-size: 22px; font-weight: 700; text-align: center; }
+    .stat-lbl { font-size: 12px; color: var(--text-sec); text-align: center; }
+    .stat-div { width: 1px; background: var(--border); }
+    .criteria-row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem; }
+    .cr-badge { font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: var(--radius-md); }
+
+    @media (max-width: 480px) {
+      body { padding: 1rem .75rem 2rem; }
+      .choice-grid { grid-template-columns: 1fr; }
+      .btn-grid { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
-<div class="wrap" id="app"></div>
+<div class="wrap" id="wrap">
+
+  <!-- ── 인트로 ── -->
+  <div id="s-intro" class="scr on">
+    <div style="text-align:center;padding:2rem 0 1.5rem">
+      <div style="font-size:13px;color:var(--text-sec);margin-bottom:.5rem">4학년 사회 · 합리적 선택</div>
+      <h1 style="font-size:24px;font-weight:700;margin-bottom:.625rem">민준이의 하루</h1>
+      <p style="font-size:14px;color:var(--text-sec);line-height:1.7;max-width:400px;margin:0 auto 1.5rem">
+        오늘 민준이에게는 선택의 순간이 5번 찾아와요.<br>
+        예산을 아끼면서도 만족도를 높일 수 있을까요?
+      </p>
+      <div class="intro-stats">
+        <div><div class="stat-val">5</div><div class="stat-lbl">라운드</div></div>
+        <div class="stat-div"></div>
+        <div><div class="stat-val">5,000원</div><div class="stat-lbl">시작 예산</div></div>
+        <div class="stat-div"></div>
+        <div><div class="stat-val">4가지</div><div class="stat-lbl">선택 기준</div></div>
+      </div>
+      <div class="criteria-row">
+        <span class="cr-badge" style="background:var(--blue-light);color:var(--blue)">가격</span>
+        <span class="cr-badge" style="background:var(--green-light);color:var(--green)">품질</span>
+        <span class="cr-badge" style="background:var(--amber-light);color:var(--amber)">디자인</span>
+        <span class="cr-badge" style="background:var(--purple-light);color:var(--purple)">필요성</span>
+      </div>
+      <div style="font-size:12px;color:var(--text-ter);margin-bottom:1.75rem">어떤 칭호를 받게 될까요?</div>
+      <button class="btn btn-primary" style="max-width:200px;margin:0 auto" onclick="startGame()">게임 시작</button>
+    </div>
+  </div>
+
+  <!-- ── 게임 ── -->
+  <div id="s-game" class="scr">
+    <div class="gauge-wrap">
+      <div class="gauge-box">
+        <div class="gauge-label"><span>남은 예산</span><span class="gauge-val" id="budget-txt">5,000원</span></div>
+        <div class="gauge-track"><div class="gauge-fill gauge-budget" id="budget-bar" style="width:100%"></div></div>
+      </div>
+      <div class="gauge-box">
+        <div class="gauge-label"><span>만족도</span><span class="gauge-val" id="satisfy-txt">0점</span></div>
+        <div class="gauge-track"><div class="gauge-fill gauge-satisfy" id="satisfy-bar" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="dots" id="dots"></div>
+    <div id="scene-area"></div>
+    <div id="result-area" style="display:none">
+      <div id="result-banner"></div>
+      <button class="btn btn-primary" id="next-btn" onclick="nextRound()">다음 장면 →</button>
+    </div>
+  </div>
+
+  <!-- ── 결과 ── -->
+  <div id="s-final" class="scr">
+    <div class="final-score" id="final-score"></div>
+    <div class="final-sub" id="final-sub"></div>
+    <div class="title-badge" id="title-badge"></div>
+    <div class="gauge-wrap">
+      <div class="gauge-box">
+        <div class="gauge-label"><span>최종 예산</span><span class="gauge-val" id="f-budget"></span></div>
+        <div class="gauge-track"><div class="gauge-fill gauge-budget" id="f-budget-bar"></div></div>
+      </div>
+      <div class="gauge-box">
+        <div class="gauge-label"><span>최종 만족도</span><span class="gauge-val" id="f-satisfy"></span></div>
+        <div class="gauge-track"><div class="gauge-fill gauge-satisfy" id="f-satisfy-bar"></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-size:14px;font-weight:600;margin-bottom:.75rem">민준이의 하루 돌아보기</div>
+      <div id="timeline"></div>
+    </div>
+    <div class="lesson-box">
+      <div class="lesson-label">오늘의 배움</div>
+      <div class="lesson-body" id="lesson"></div>
+    </div>
+    <div class="btn-grid">
+      <button class="btn btn-sec" onclick="resetGame()">다시 하기</button>
+      <button class="btn btn-primary" onclick="show('s-discussion')">모둠 토의 질문 보기</button>
+    </div>
+  </div>
+
+  <!-- ── 모둠 토의 ── -->
+  <div id="s-discussion" class="scr">
+    <div style="margin-bottom:1.25rem">
+      <div style="font-size:13px;color:var(--text-sec);margin-bottom:.375rem">게임 후 모둠 토의</div>
+      <div style="font-size:18px;font-weight:700">친구들과 이야기 나눠요</div>
+    </div>
+
+    <div class="q-card">
+      <div class="q-num">발문 1 — 경험 나누기</div>
+      <div class="q-text">"어느 장면에서 가장 후회스러운 선택을 했나요? 왜 그 선택이 아쉬웠나요?"</div>
+      <div class="q-hint">게임 결과 타임라인을 보며 자신의 선택을 돌아봅니다. 모둠원끼리 서로 다른 장면에서 후회한 이유를 비교해 보세요.</div>
+    </div>
+    <div class="q-card">
+      <div class="q-num">발문 2 — 기준 찾기</div>
+      <div class="q-text">"후회한 선택에서 어떤 기준이 빠져 있었나요? 가격·품질·디자인·필요성 중 무엇을 놓쳤나요?"</div>
+      <div class="q-hint">놓친 기준 태그(빨간색)를 확인하고, 모둠에서 가장 자주 놓친 기준이 무엇인지 이야기해 봅니다.</div>
+    </div>
+    <div class="q-card">
+      <div class="q-num">발문 3 — 개념 연결</div>
+      <div class="q-text">"합리적 선택을 하지 않으면 어떤 문제가 생길까요? 게임에서 경험한 것을 바탕으로 말해봐요."</div>
+      <div class="q-hint">예산 게이지 감소와 만족도 저하 경험을 연결하여 생각합니다.</div>
+    </div>
+    <div class="q-card">
+      <div class="q-num">발문 4 — 다음 차시 연결</div>
+      <div class="q-text">"다음에 비슷한 상황이 생긴다면, 어떤 순서로 기준을 따져볼 건가요?"</div>
+      <div class="q-hint">다음 차시 '합리적 선택의 기준 세우기'로 자연스럽게 이어지는 질문입니다.</div>
+    </div>
+
+    <div class="teacher-box">
+      <div style="font-size:12px;font-weight:600;color:var(--text-sec);margin-bottom:.5rem">교사 정리 발문</div>
+      <div style="font-size:14px;line-height:1.8">
+        "여러 기준을 고려해서 선택하면 어떤 점이 좋을까요?"<br>
+        → 돈과 자원을 낭비하지 않고 더 큰 만족을 얻을 수 있다.
+      </div>
+    </div>
+
+    <button class="btn btn-sec" onclick="show('s-final')">결과 화면으로 돌아가기</button>
+  </div>
+
+</div><!-- /wrap -->
 
 <script>
-/* ---------------- DATA ---------------- */
-const CHARACTERS = [
-  {id:'a', em:'🧑‍🚀', name:'우주소년 준'},
-  {id:'b', em:'🧑‍🎨', name:'예술가 하늘'},
-  {id:'c', em:'🧑‍🔬', name:'탐구자 리나'},
-  {id:'d', em:'🧑‍🌾', name:'모험가 도현'},
+// ── 상수 ──────────────────────────────────────────────────────────────────────
+const BUDGET_MAX  = 5000;
+const SATISFY_MAX = 15;
+
+// ── 칭호 ──────────────────────────────────────────────────────────────────────
+const TITLES = [
+  { min: 85, label: '합리적 소비 마스터',  icon: '👑', bg: '#FAEEDA', border: '#BA7517', color: '#633806' },
+  { min: 65, label: '꼼꼼한 소비자',        icon: '🔍', bg: '#EAF3DE', border: '#3B6D11', color: '#27500A' },
+  { min: 45, label: '아쉬운 짠돌이',        icon: '👛', bg: '#E6F1FB', border: '#185FA5', color: '#0C447C' },
+  { min: 25, label: '충동구매 위험 신호',    icon: '⚠️', bg: '#FAEEDA', border: '#854F0B', color: '#633806' },
+  { min:  0, label: '위험한 충동구매러',     icon: '💸', bg: '#FCEBEB', border: '#A32D2D', color: '#791F1F' },
 ];
 
-// deltas per section 7-2 of the design doc
-const DELTA = {
-  checkThink:   {ji:+5, ri:+1},  // 근거 확인 후 직접 판단
-  checkFollow:  {ji:+5, ri: 0},  // 근거 확인 후 AI 추천 수용
-  skipFollow:   {ji:-5, ri:-1},  // 무근거 무조건 수용
-  skipThink:    {ji:-5, ri: 0},  // 무근거 무조건 거부
-  ownIt:        {ri:+12},        // 나쁜 결과 → 내 탓
-  blameAI:      {ri:-12},        // 나쁜 결과 → AI 탓
-};
-
-const CARDS = [
-  {cat:'일상', tag:'데이터 편향',
-   situ:'방과 후 동아리를 골라야 한다.',
-   detail:'체육대회가 끝난 어느 오후, 담임 선생님이 방과 후 동아리 신청서를 나눠준다. 로봇공학반, 미술반, 축구부, 합창단… 신청서는 오늘까지다. 손목의 스마트워치 속 AI 조력자가 먼저 말을 건다.',
-   ai:'"너의 게임 점수 데이터를 보니 로봇공학반이 적성 100% 일치야!"',
-   flaw:'표본이 게임 점수 하나뿐인데 "적성 100%"라고 단정한다.',
-   evidence:[
-     {text:'최근 3개월간 네가 즐겨 한 게임은 대부분 퍼즐·전략 장르였다.', supportsAI:true},
-     {text:'로봇공학반 선배 후기: "코딩 숙제가 매주 있어서 생각보다 빡빡해요."', supportsAI:false},
-     {text:'지난 학기 미술 수행평가에서 최고점을 받았지만, 이 데이터는 추천에 반영되지 않았다.', supportsAI:false},
-   ],
-   success:0.55, succTxt:'로봇공학반 활동이 생각보다 즐거워 새 친구도 사귀었다.',
-   failTxt:'막상 해보니 적성과 안 맞아 흥미를 잃고 말았다.'},
-
-  {cat:'일상', tag:'데이터 편향',
-   situ:'용돈으로 운동화를 산다.',
-   detail:'용돈 3만 원을 손에 쥐고 신발 매장 앞에 섰다. 갖고 싶던 운동화가 두 종류다. AI 조력자가 화면에 추천 상품을 띄운다.',
-   ai:'"이 브랜드가 또래 사이 만족도 1위야, 이걸로 사!"',
-   flaw:'광고 노출 데이터를 "만족도"로 둔갑시켰다.',
-   evidence:[
-     {text:'이 브랜드의 SNS 광고 노출 수가 지난달 3배로 늘었다.', supportsAI:false},
-     {text:'실제 구매 후기 평점은 5점 만점에 3.6점으로 평범한 수준이다.', supportsAI:false},
-     {text:'같은 학년 학생 설문에서 이 브랜드의 착화감이 좋다는 응답이 많았다.', supportsAI:true},
-   ],
-   success:0.5, succTxt:'가성비도 좋고 마음에 쏙 들었다.',
-   failTxt:'생각보다 금방 낡고 발도 편하지 않았다.'},
-
-  {cat:'일상', tag:'과신',
-   situ:'이번 주 학습 계획을 짠다.',
-   detail:'중간고사가 3주 앞으로 다가왔다. 책상 앞에 앉자 AI 학습 플래너가 자동으로 계획표를 띄운다.',
-   ai:'"매일 국어 2시간, 수학 1시간이 최적 조합이야."',
-   flaw:'모든 학생에게 똑같은 시간을 "최적"이라 말한다 — 개인차·컨디션 무시.',
-   evidence:[
-     {text:'전교 상위권 학생 100명의 평균 공부 시간을 기준으로 만든 계획이다.', supportsAI:true},
-     {text:'너는 지난주 체육대회 준비로 이미 많이 지쳐 있다는 사실은 반영되지 않았다.', supportsAI:false},
-     {text:'같은 계획표를 따라한 학생 중 절반은 "너무 빡빡해서 중도 포기했다"고 답했다.', supportsAI:false},
-   ],
-   success:0.5, succTxt:'계획대로 착착 진행되어 뿌듯했다.',
-   failTxt:'체력이 못 따라줘서 며칠 만에 지쳐버렸다.'},
-
-  {cat:'일상', tag:'설명 불가능성',
-   situ:'친구와 다퉜다, 화해 문자를 보낸다.',
-   detail:'단짝 친구 서연이와 사소한 오해로 다퉜다. 하루 종일 마음이 무겁다. 밤 10시, AI 조력자가 화해 메시지 초안을 보여준다.',
-   ai:'"이 문장을 그대로 보내면 화해 성공률 90%야."',
-   flaw:'왜 그 문장이 효과적인지 근거를 전혀 설명하지 않는다.',
-   evidence:[
-     {text:'이 문장은 지난달 다른 학생들의 갈등 사례 500건에서 평균적으로 좋은 반응을 얻었다.', supportsAI:true},
-     {text:'서연이가 요즘 "형식적인 사과"를 싫어한다고 말했던 적이 있다는 건 AI가 모른다.', supportsAI:false},
-     {text:'문장 안에 "네가 예민한 것 같아"라는 표현이 들어 있어 오히려 자극할 수 있다.', supportsAI:false},
-   ],
-   success:0.6, succTxt:'문자를 받은 친구가 웃으며 답장했다.',
-   failTxt:'문장이 상황과 안 맞아 오히려 서먹해졌다.'},
-
-  {cat:'일상', tag:'데이터 편향',
-   situ:'급식 후 간식을 고른다.',
-   detail:'급식을 다 먹고 매점으로 향한다. 스마트폰 건강 앱이 오늘의 간식을 추천한다.',
-   ai:'"네 건강 데이터상 이 간식이 최적이야."',
-   flaw:'또래 평균 데이터일 뿐, 내 알레르기·체질은 반영되지 않았다.',
-   evidence:[
-     {text:'네 최근 성장기록·활동량 데이터를 기준으로 계산된 추천이다.', supportsAI:true},
-     {text:'이 앱에는 작년에 있었던 견과류 알레르기 기록이 입력되어 있지 않다.', supportsAI:false},
-     {text:'추천 간식에는 견과류가 들어 있다.', supportsAI:false},
-   ],
-   success:0.55, succTxt:'맛있게 잘 먹었다.',
-   failTxt:'속이 더부룩해서 고생했다.'},
-
-  {cat:'일상', tag:'과신',
-   situ:'동아리 발표 주제를 정한다.',
-   detail:'발표 3일 전, 아직 주제를 못 정했다. AI가 실시간 인기 검색어를 분석해 알려준다.',
-   ai:'"최근 인기 검색어 기준 이 주제가 가장 반응이 좋아."',
-   flaw:'"인기 있다"와 "우리 동아리에 맞다"를 같은 것으로 취급한다.',
-   evidence:[
-     {text:'이 주제는 이번 주 전국 검색량 1위다.', supportsAI:true},
-     {text:'우리 동아리는 그동안 환경 관련 주제를 다뤄왔고, 이 주제는 결이 전혀 다르다.', supportsAI:false},
-     {text:'검색량이 많다고 우리 학교 학생들의 관심사와 같다는 보장은 없다.', supportsAI:false},
-   ],
-   success:0.5, succTxt:'친구들 반응이 뜨거워 발표가 성공적이었다.',
-   failTxt:'우리 동아리 색깔과 안 맞아 반응이 싸늘했다.'},
-
-  {cat:'의료', tag:'설명 불가능성',
-   situ:'며칠째 배가 아파 AI 문진 앱에 증상을 입력했다.',
-   detail:'3일째 배가 살살 아프다. 병원 가기는 귀찮아서 AI 문진 앱에 증상을 입력해본다.',
-   ai:'"단순 소화불량, 약국 소화제면 충분해."',
-   flaw:'왜 그렇게 판단했는지 근거(검사 데이터 등)를 제시하지 않는다.',
-   evidence:[
-     {text:'입력한 증상 패턴은 소화불량 사례의 78%와 일치한다.', supportsAI:true},
-     {text:'앱은 최근 며칠간 미열이 함께 있었다는 사실은 물어보지 않았다.', supportsAI:false},
-     {text:'비슷한 증상을 방치했다가 맹장염으로 진행된 사례는 이 앱 데이터베이스에 없다.', supportsAI:false},
-   ],
-   success:0.45, succTxt:'며칠 뒤 씻은 듯이 나았다.',
-   failTxt:'증상이 악화되어 결국 병원 정밀검사를 받아야 했다.'},
-
-  {cat:'의료', tag:'데이터 편향',
-   situ:'수술이 필요한지 애매한 상황, AI가 확률을 제시한다.',
-   detail:'무릎 인대를 다쳤다. 의사 선생님도 애매하다며 AI 진단 보조 시스템의 의견을 함께 보여준다.',
-   ai:'"수술 성공률 92%니까 바로 수술을 추천해."',
-   flaw:'학습 데이터에 나와 비슷한 체질·연령 사례가 적게 포함되어 있다.',
-   evidence:[
-     {text:'비슷한 부상 1,200건 중 92%가 수술 후 완전히 회복했다.', supportsAI:true},
-     {text:'그 1,200건 중 성장판이 아직 열려 있는 청소년 사례는 30건뿐이다.', supportsAI:false},
-     {text:'담당 의사는 "비수술 치료로도 회복 가능성이 있다"고 별도로 언급했다.', supportsAI:false},
-   ],
-   success:0.5, succTxt:'수술 후 회복이 순조로웠다.',
-   failTxt:'예상 못한 합병증으로 회복이 오래 걸렸다.'},
-
-  {cat:'의료', tag:'과신',
-   situ:'처방약 조합을 AI가 추천한다.',
-   detail:'감기약을 먹는 중인데 두통까지 심해졌다. AI 조력자가 두통약 조합을 추천한다.',
-   ai:'"이 두 약을 같이 먹으면 회복이 더 빨라."',
-   flaw:'두 약물의 상호작용·부작용 데이터를 충분히 반영하지 않았다.',
-   evidence:[
-     {text:'두 성분을 함께 먹으면 두통 완화 속도가 평균 20% 빨라진다는 통계가 있다.', supportsAI:true},
-     {text:'두 약의 상호작용 부작용 사례는 이 앱의 학습 데이터에 충분히 포함되어 있지 않다.', supportsAI:false},
-     {text:'약사 선생님은 안내문에 "이 조합은 반드시 상담 후 복용하라"고 적어 두었다.', supportsAI:false},
-   ],
-   success:0.5, succTxt:'회복이 확실히 빨라졌다.',
-   failTxt:'부작용으로 며칠을 더 앓았다.'},
-
-  {cat:'사법', tag:'데이터 편향',
-   situ:'모의 배심원 활동, AI가 양형을 예측해 참고자료로 준다.',
-   detail:'사회 시간, 모의 배심원 활동이 시작됐다. AI 양형 예측 프로그램이 참고 자료로 형량을 제시한다.',
-   ai:'"과거 판례 데이터 기준 징역 3년이 적정해."',
-   flaw:'과거 판례 자체에 지역·계층에 따른 편향이 존재할 수 있다.',
-   evidence:[
-     {text:'이 예측은 지난 10년간의 유사 판례 8,000건을 학습한 결과다.', supportsAI:true},
-     {text:'그 판례들 중 특정 지역 출신 피고인에게 더 무거운 형이 내려진 비율이 눈에 띄게 높다.', supportsAI:false},
-     {text:'이번 사건의 특수한 정황(초범, 반성문)은 예측 모델에 반영되지 않는다.', supportsAI:false},
-   ],
-   success:0.5, succTxt:'모둠 토의에서 균형 잡힌 결론을 이끌어냈다는 평가를 받았다.',
-   failTxt:'다른 모둠으로부터 "편향된 근거를 그대로 따랐다"는 지적을 받았다.'},
-
-  {cat:'사법', tag:'설명 불가능성',
-   situ:'모의재판에서 유·무죄를 판단해야 한다.',
-   detail:'모의재판 마지막 날, 배심원단이 최종 판단을 내려야 한다. AI가 증거를 종합해 확률을 제시한다.',
-   ai:'"증거 데이터를 종합하면 유죄 확률 87%야."',
-   flaw:'어떤 증거가 결정적이었는지 전혀 설명하지 않는다.',
-   evidence:[
-     {text:'제시된 확률은 CCTV, 목격자 진술 등 12가지 증거를 종합한 값이다.', supportsAI:true},
-     {text:'어떤 증거에 얼마나 가중치를 뒀는지는 공개되어 있지 않다.', supportsAI:false},
-     {text:'목격자 진술 하나는 이후 신빙성이 낮다는 지적이 나왔지만 프로그램은 이를 반영하지 못했다.', supportsAI:false},
-   ],
-   success:0.45, succTxt:'논리적인 판단 근거를 제시해 좋은 평가를 받았다.',
-   failTxt:'근거를 설명하지 못해 판단의 신뢰를 잃었다.'},
-
-  {cat:'사법', tag:'데이터 편향',
-   situ:'가석방 심사 모의 활동, AI가 재범 위험도 점수를 준다.',
-   detail:'마지막 활동, 가석방 심사위원회 역할극이다. AI가 재범 위험도 점수를 화면에 띄운다.',
-   ai:'"재범 위험도 낮음, 가석방을 추천해."',
-   flaw:'재범 위험도 산출에 쓰인 과거 데이터 자체에 편향이 있을 수 있다.',
-   evidence:[
-     {text:'재범 위험도 점수는 나이, 전과, 사회적 지원 여부 등을 종합해 산출된다.', supportsAI:true},
-     {text:'이 점수 산출에 쓰인 과거 데이터는 특정 계층에게 불리하게 작용했다는 연구 결과가 있다.', supportsAI:false},
-     {text:'대상자가 최근 안정적인 직장을 구했다는 최신 정보는 아직 반영되지 않았다.', supportsAI:false},
-   ],
-   success:0.5, succTxt:'신중한 논의 끝에 설득력 있는 결론을 냈다.',
-   failTxt:'중요한 변수를 놓쳐 결론이 뒤집혔다.'},
+// ── 라운드 데이터 ──────────────────────────────────────────────────────────────
+const ROUNDS = [
+  {
+    icon: '✏️', title: '아침 — 학용품 코너에서',
+    story: '오늘 준비물로 공책이 필요해요. 문구점 선반에 공책 4종류가 있어요.',
+    choices: [
+      { name: '500원짜리 민무늬 공책',    p:5,q:2,d:1,n:4, cost:500,  sat:2, tag:'ok',  result:'필요한 공책을 싸게 샀어요! 필요성과 가격 기준을 잘 고려했어요.', missed:[] },
+      { name: '1,200원 캐릭터 공책',      p:2,q:3,d:5,n:4, cost:1200, sat:3, tag:'ok',  result:'귀엽고 품질도 나쁘지 않아요. 비슷한 품질의 공책보다 700원 더 썼어요.', missed:['가격'] },
+      { name: '2,500원 고급 스프링 공책', p:1,q:5,d:4,n:4, cost:2500, sat:2, tag:'bad', result:'품질은 최고지만 필기용 공책 치고는 너무 비쌌어요. 나중에 예산이 부족해질 수 있어요.', missed:['가격','필요성'] },
+      { name: '300원 낱장 메모지',        p:5,q:1,d:1,n:1, cost:300,  sat:0, tag:'bad', result:'가장 싸지만 공책이 아니라 필기가 불편해요. 필요성을 확인하지 않았어요.', missed:['품질','필요성'] },
+    ],
+  },
+  {
+    icon: '🍱', title: '점심 — 분식집 메뉴 선택',
+    story: '학교 끝나고 분식집에 왔어요. 배도 고프고 메뉴를 고르기가 어렵네요.',
+    choices: [
+      { name: '김밥 (1,500원)',        p:4,q:3,d:2,n:4, cost:1500, sat:3, tag:'ok',  result:'배도 부르고 가격도 적당해요. 필요성과 가격을 잘 따진 합리적 선택이에요!', missed:[] },
+      { name: '라볶이 (2,000원)',      p:3,q:4,d:3,n:3, cost:2000, sat:4, tag:'ok',  result:'맛있고 배도 든든해요. 조금 비싸지만 만족도가 높아요.', missed:[] },
+      { name: '돈까스 세트 (4,500원)', p:1,q:5,d:5,n:3, cost:4500, sat:3, tag:'bad', result:'맛있지만 거의 전 재산을 점심에 다 써버렸어요! 이후 선택이 어려워져요.', missed:['가격','필요성'] },
+      { name: '500원 사탕',            p:5,q:1,d:2,n:1, cost:500,  sat:0, tag:'bad', result:'가장 싸지만 밥 대신 사탕은 배가 안 차요. 필요성을 생각하지 않은 선택이에요.', missed:['품질','필요성'] },
+    ],
+  },
+  {
+    icon: '🎮', title: '오후 — 앱 스토어에서',
+    story: '친구들이 다 한다는 게임 앱이 있어요. 아이템 구매 옵션이 4가지예요.',
+    choices: [
+      { name: '무료 기본 버전',      p:5,q:2,d:3,n:3, cost:0,    sat:2, tag:'ok',  result:'돈을 전혀 쓰지 않았어요! 기능이 제한되지만 예산을 아꼈어요.', missed:[] },
+      { name: '500원 스타터팩',      p:4,q:3,d:3,n:3, cost:500,  sat:3, tag:'ok',  result:'적은 돈으로 기본 아이템을 얻었어요. 가격과 필요성을 균형 있게 고려했어요.', missed:[] },
+      { name: '1,500원 프리미엄팩',  p:2,q:5,d:5,n:2, cost:1500, sat:2, tag:'bad', result:'아이템이 화려하지만 게임을 자주 안 한다면 불필요한 지출이에요.', missed:['필요성','가격'] },
+      { name: '3,000원 최고급 세트', p:1,q:5,d:5,n:1, cost:3000, sat:1, tag:'bad', result:'멋진 아이템이지만 게임 앱에 3,000원은 과소비예요.', missed:['가격','필요성'] },
+    ],
+  },
+  {
+    icon: '🎁', title: '저녁 — 친구 생일 선물',
+    story: '내일 친구 생일이에요! 예산 범위 안에서 선물을 골라야 해요.',
+    choices: [
+      { name: '문구 세트',             p:4,q:3,d:3,n:5, costFn: b=>Math.min(b,1500), sat:4, tag:'ok',  result:'예산 안에서 꼭 필요한 선물을 골랐어요! 필요성과 가격 모두 고려한 선택이에요.', missed:[],             minBudget:1000 },
+      { name: '1,000원 사탕 묶음',    p:5,q:2,d:2,n:3, cost:1000,                   sat:2, tag:'ok',  result:'가장 저렴하게 해결했어요. 선물로는 좀 아쉽지만 가격 기준을 잘 지켰어요.',  missed:['품질','디자인'] },
+      { name: '화려한 캐릭터 피규어', p:1,q:5,d:5,n:2, costFn: b=>b,               sat:1, tag:'bad', result:'남은 돈을 몽땅 썼어요! 친구가 좋아할지도 불확실하고 빈 지갑이 됐어요.',      missed:['가격','필요성'], minBudget:2000 },
+      { name: '직접 만든 카드 (무료)', p:5,q:2,d:3,n:4, cost:0,                      sat:3, tag:'ok',  result:'돈을 아끼면서 정성을 담았어요! 꼭 돈을 써야 좋은 선물은 아니에요.',          missed:[] },
+    ],
+  },
+  {
+    icon: '🏪', title: '귀갓길 — 편의점 간식',
+    story: '집에 가는 길에 배가 고파요. 편의점에서 간식을 살까요?',
+    choices: [
+      { name: '그냥 집에 간다',            p:5,q:3,d:2,n:2, cost:0,    sat:2, tag:'ok',  result:'참을 수 있었어요! 불필요한 지출을 줄이는 것도 합리적 선택이에요.', missed:[] },
+      { name: '700원 삼각김밥',            p:4,q:3,d:2,n:4, cost:700,  sat:3, tag:'ok',  result:'필요한 만큼만 적당히 샀어요. 가격과 필요성을 잘 따졌어요!', missed:[] },
+      { name: '1,800원 도시락',            p:2,q:4,d:3,n:2, cost:1800, sat:2, tag:'bad', result:'집에 가면 저녁을 먹을 텐데 너무 많이 샀어요. 필요성을 생각하지 않았어요.', missed:['필요성','가격'] },
+      { name: '남은 돈 다 털어 과자 잔뜩', p:1,q:3,d:4,n:1, costFn: b=>b, sat:1, tag:'bad', result:'마지막에 남은 돈을 충동적으로 다 써버렸어요.', missed:['필요성','가격'], minBudget:700 },
+    ],
+  },
 ];
 
-const DICE_FACES = ['','⚀','⚁','⚂','⚃','⚄','⚅'];
+// ── 상태 ──────────────────────────────────────────────────────────────────────
+let cur = 0, budget = BUDGET_MAX, satisfy = 0, history = [], locked = false;
 
-/* ---------------- STATE ---------------- */
-let S = {
-  screen:'intro',
-  charId:null,
-  idx:0,
-  RI:50, JI:50,
-  history:[], // {cat, checked, followed, success, reaction}
-  pendingCard:null,
-  pendingChoice:{},
-};
-
-function counts(){
-  const c = {checkThink:0, checkFollow:0, skipFollow:0, skipThink:0, ownIt:0, blameAI:0, fails:0};
-  S.history.forEach(h=>{
-    c[h.actionKey]++;
-    if(h.reaction) c[h.reaction]++;
-    if(!h.success) c.fails++;
-  });
-  return c;
+// ── 유틸 ──────────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+function show(id) {
+  document.querySelectorAll('.scr').forEach(s => s.classList.remove('on'));
+  $(id).classList.add('on');
 }
 
-/* ---------------- RENDER ---------------- */
-const app = document.getElementById('app');
-
-function render(){
-  if(S.screen==='intro') return renderIntro();
-  if(S.screen==='char') return renderChar();
-  if(S.screen==='board') return renderBoard();
-  if(S.screen==='card') return renderCard();
-  if(S.screen==='outcome') return renderOutcome();
-  if(S.screen==='reaction') return renderReaction();
-  if(S.screen==='ending') return renderEnding();
+function getCost(c) { return c.costFn ? c.costFn(budget) : (c.cost || 0); }
+function isDisabled(c) {
+  if (c.minBudget !== undefined && budget < c.minBudget) return true;
+  return getCost(c) > budget;
 }
 
-function header(showGauges){
-  const ch = CHARACTERS.find(c=>c.id===S.charId) || CHARACTERS[0];
-  return `
-  <header class="top brutal">
-    <div class="charrow">
-      <div class="avatar">${ch.em}</div>
+function updateGauges() {
+  const bp = Math.max(0, Math.round(budget / BUDGET_MAX * 100));
+  const sp = Math.round(satisfy / SATISFY_MAX * 100);
+  $('budget-bar').style.width  = bp + '%';
+  $('satisfy-bar').style.width = sp + '%';
+  $('budget-txt').textContent  = budget.toLocaleString() + '원';
+  $('satisfy-txt').textContent = satisfy + '점';
+}
+
+function renderDots() {
+  $('dots').innerHTML = ROUNDS.map((_, i) =>
+    `<div class="dot${i < cur ? ' done' : i === cur ? ' cur' : ''}"></div>`
+  ).join('');
+}
+
+function missTags(missed) {
+  return missed.map(m => `<span class="tag tag-miss">${m}</span>`).join('');
+}
+
+// ── 장면 렌더 ─────────────────────────────────────────────────────────────────
+function renderScene() {
+  const r = ROUNDS[cur];
+  locked = false;
+  $('result-area').style.display = 'none';
+
+  const choiceHTML = r.choices.map((c, i) => {
+    const off = isDisabled(c);
+    const cost = getCost(c);
+    const priceColor = off ? 'var(--red)' : 'var(--text-sec)';
+    const priceLabel = cost === 0 ? '무료' : cost.toLocaleString() + '원';
+    const bars = [
+      { lbl: '가격', val: c.p, color: '#378ADD' },
+      { lbl: '품질', val: c.q, color: '#639922' },
+      { lbl: '디자인', val: c.d, color: '#EF9F27' },
+      { lbl: '필요성', val: c.n, color: '#7F77DD' },
+    ];
+    return `
+      <div class="c-card${off ? ' c-disabled' : ''}" id="cc-${i}" ${off ? '' : `onclick="pick(${i},event)"`}>
+        ${off ? '<div class="c-badge-no">예산 부족</div>' : ''}
+        <div class="c-num">${['①','②','③','④'][i]}</div>
+        <div class="c-name">${c.name}</div>
+        <div class="c-price" style="color:${priceColor}">${priceLabel}</div>
+        <div class="attrs">
+          ${bars.map(b => `
+            <div class="attr-row">
+              <div class="attr-lbl" style="color:${b.color}">${b.lbl}</div>
+              <div class="attr-track"><div class="attr-bar" style="width:${b.val/5*100}%;background:${b.color}"></div></div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }).join('');
+
+  $('scene-area').innerHTML = `
+    <div class="scene-header">
+      <div class="scene-icon">${r.icon}</div>
       <div>
-        <div style="font-weight:900; font-size:16px;">${ch.name}</div>
-        <div class="subtle">책임 인생게임</div>
-      </div>
-      <div class="progresswrap">${S.idx}/${CARDS.length} 칸<br><span class="subtle">진행률</span></div>
-    </div>
-    ${showGauges ? `
-    <div class="gauges">
-      <div class="gauge ri">
-        <div class="gauge-label"><span>책임감 지수 RI</span><span id="ri-val">${S.RI}</span></div>
-        <div class="gauge-track" id="ri-track"><div class="gauge-fill" id="ri-fill" style="width:${S.RI}%"></div></div>
-      </div>
-      <div class="gauge ji">
-        <div class="gauge-label"><span>판단력 지수 JI</span><span id="ji-val">${S.JI}</span></div>
-        <div class="gauge-track" id="ji-track"><div class="gauge-fill" id="ji-fill" style="width:${S.JI}%; background:var(--cyan);"></div></div>
-      </div>
-    </div>` : ''}
-  </header>`;
-}
-
-function renderIntro(){
-  app.innerHTML = `
-    <div class="brutal card-panel">
-      <h1>책임 인생게임</h1>
-      <p class="subtle">AI 조력자와 함께 인생의 갈림길을 통과하세요.<br>매 순간 "AI를 따를 것인가, 스스로 판단할 것인가"가 당신의 엔딩을 결정합니다.</p>
-      <div style="margin:16px 0;">
-        <span class="tag">일상 6칸</span><span class="tag">의료 3칸</span><span class="tag">사법 3칸</span>
-      </div>
-      <div class="btn full" onclick="go('char')">게임 시작 →</div>
-    </div>`;
-}
-
-function renderChar(){
-  app.innerHTML = `
-    <div class="brutal card-panel">
-      <h2>캐릭터 선택</h2>
-      <p class="subtle">함께할 주인공을 골라주세요.</p>
-      <div class="charpick">
-        ${CHARACTERS.map(c=>`
-          <div class="charcard ${S.charId===c.id?'sel':''}" onclick="pickChar('${c.id}')">
-            <span class="em">${c.em}</span>
-            <span class="nm">${c.name}</span>
-          </div>`).join('')}
-      </div>
-      <div class="btn full ${S.charId?'lime':''}" style="${S.charId?'':'opacity:.4;pointer-events:none;'}" onclick="startBoard()">모험 떠나기 →</div>
-    </div>`;
-}
-function pickChar(id){ S.charId=id; render(); }
-function startBoard(){ if(!S.charId) return; S.screen='board'; render(); }
-
-function renderBoard(){
-  const tiles = CARDS.map((c,i)=>{
-    let cls='tile';
-    if(i<S.idx) cls+=' done';
-    if(i===S.idx) cls+=' now';
-    const ch = CHARACTERS.find(x=>x.id===S.charId);
-    return `<div class="${cls}">${i+1}. ${c.cat}${i===S.idx?`<span class="token">${ch.em}</span>`:''}</div>`;
-  }).join('');
-  app.innerHTML = `
-    ${header(true)}
-    <div class="brutal card-panel" style="text-align:center;">
-      <h2>${S.idx+1}번째 칸 도착</h2>
-      <p class="subtle">주사위를 굴려 사건을 확인하세요. 눈이 클수록 AI 추천의 숨은 근거를 더 많이 미리 볼 수 있습니다.</p>
-      <div class="board" style="justify-content:center; margin:16px 0;">${tiles}</div>
-      <div class="dice-face" id="dice-face">🎲</div>
-      <div class="btn lime" id="dice-btn" onclick="rollDice()">주사위 굴리기</div>
-    </div>`;
-}
-
-function rollDice(){
-  const btn = document.getElementById('dice-btn');
-  const face = document.getElementById('dice-face');
-  btn.setAttribute('disabled','disabled');
-  face.classList.remove('landed');
-  let ticks = 0;
-  const iv = setInterval(()=>{
-    const f = 1+Math.floor(Math.random()*6);
-    face.textContent = DICE_FACES[f];
-    ticks++;
-    if(ticks>12){
-      clearInterval(iv);
-      const roll = 1+Math.floor(Math.random()*6);
-      face.textContent = DICE_FACES[roll];
-      face.classList.add('landed');
-      setTimeout(()=>afterRoll(roll), 550);
-    }
-  }, 80);
-}
-
-function afterRoll(roll){
-  const card = CARDS[S.idx];
-  const revealedCount = Math.ceil(roll/2); // 1~2눈:1개, 3~4눈:2개, 5~6눈:3개(전부)
-  const order = [0,1,2].sort(()=>Math.random()-0.5);
-  S.pendingCard = card;
-  S.pendingChoice = {};
-  S.roll = roll;
-  S.revealOrder = order;
-  S.revealedSet = new Set(order.slice(0, revealedCount));
-  S.screen='card';
-  render();
-}
-
-function evidenceListHTML(){
-  const c = S.pendingCard;
-  return c.evidence.map((ev,i)=>{
-    const revealed = S.revealedSet.has(i);
-    if(!revealed){
-      return `<li class="ev locked">🔒 아직 확인되지 않은 근거</li>`;
-    }
-    return `<li class="ev ${ev.supportsAI?'support':'against'}">${ev.supportsAI?'👍':'⚠️'} ${ev.text}</li>`;
-  }).join('');
-}
-
-function renderCard(){
-  const c = S.pendingCard;
-  const revealedCount = S.revealedSet.size;
-  app.innerHTML = `
-    ${header(true)}
-    <div class="brutal card-panel">
-      <span class="tag">${c.cat} 카드</span><span class="tag warn">${c.tag}</span>
-      <h2>${S.idx+1}번째 사건</h2>
-      <p style="font-weight:700; font-size:16px;">${c.detail}</p>
-      <div class="brutal" style="padding:14px; background:var(--purple); margin:14px 0;">
-        <b>🤖 AI 조력자:</b> ${c.ai}
-      </div>
-      <div class="dice-result">🎲 주사위 결과 ${S.roll} → 근거 ${revealedCount}/${c.evidence.length}개 자동 공개</div>
-      <ul class="evlist" id="evlist">${evidenceListHTML()}</ul>
-      <p class="subtle" style="margin-top:14px;">나머지 근거까지 직접 확인해볼까요?</p>
-      <div class="choicegrid">
-        <div class="btn cyan" onclick="setStep1(true)">🔍 근거부터 확인한다</div>
-        <div class="btn" onclick="setStep1(false)">⚡ 바로 결정한다</div>
+        <div class="scene-num">장면 ${cur + 1} / ${ROUNDS.length}</div>
+        <div class="scene-title">${r.title}</div>
       </div>
     </div>
-    <div id="step2wrap"></div>`;
+    <div class="scene-story">${r.story}</div>
+    <div class="choice-hint">무엇을 선택할까요?</div>
+    <div class="choice-grid">${choiceHTML}</div>`;
 }
 
-function setStep1(checked){
-  S.pendingChoice.checked = checked;
-  if(checked){
-    S.pendingCard.evidence.forEach((_,i)=>S.revealedSet.add(i));
-    document.getElementById('evlist').innerHTML = evidenceListHTML();
+// ── 플로팅 텍스트 ─────────────────────────────────────────────────────────────
+function spawnFloat(x, y, costTxt, satTxt) {
+  const wrap = $('wrap');
+  const rect = wrap.getBoundingClientRect();
+  const make = (txt, color, ox) => {
+    const el = document.createElement('div');
+    el.className = 'float-txt';
+    el.textContent = txt;
+    el.style.color = color;
+    el.style.left  = (x - rect.left + ox) + 'px';
+    el.style.top   = (y - rect.top - 10) + 'px';
+    wrap.appendChild(el);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      el.style.transform = 'translateY(-52px)';
+      el.style.opacity   = '0';
+    }));
+    setTimeout(() => el.remove(), 960);
+  };
+  if (costTxt) make(costTxt, 'var(--red)',   -36);
+  if (satTxt)  make(satTxt,  'var(--green)',  18);
+}
+
+// ── 선택 ──────────────────────────────────────────────────────────────────────
+function pick(idx, event) {
+  if (locked) return;
+  const r = ROUNDS[cur];
+  const c = r.choices[idx];
+  if (isDisabled(c)) return;
+  locked = true;
+
+  const actualCost = Math.min(getCost(c), budget);
+  budget  = Math.max(0, budget - actualCost);
+  satisfy += c.sat;
+  history.push({ icon: r.icon, choice: c, cost: actualCost });
+
+  // 플로팅 텍스트
+  if (event) {
+    const rect = $('wrap').getBoundingClientRect();
+    spawnFloat(
+      event.clientX - rect.left,
+      event.clientY - rect.top,
+      actualCost > 0 ? '-' + actualCost.toLocaleString() + '원' : null,
+      c.sat > 0      ? '만족도 +' + c.sat : null,
+    );
   }
-  const wrap = document.getElementById('step2wrap');
-  wrap.innerHTML = `
-    <div class="brutal card-panel">
-      <p class="subtle">${checked ? '숨어있던 근거까지 모두 확인했습니다. 이제 어떻게 할까요?' : '근거 확인 없이 바로 정해야 합니다.'}</p>
-      <div class="choicegrid">
-        <div class="btn pink" onclick="setStep2(true)">🤖 AI를 따른다</div>
-        <div class="btn lime" onclick="setStep2(false)">🧠 내 판단대로 한다</div>
-      </div>
-    </div>`;
-}
 
-function setStep2(followed){
-  S.pendingChoice.followed = followed;
-  resolveCard();
-}
-
-function resolveCard(){
-  const c = S.pendingCard;
-  const {checked, followed} = S.pendingChoice;
-  let actionKey;
-  if(checked && !followed) actionKey='checkThink';
-  else if(checked && followed) actionKey='checkFollow';
-  else if(!checked && followed) actionKey='skipFollow';
-  else actionKey='skipThink';
-
-  const d = DELTA[actionKey];
-  applyDelta(d.ri, d.ji);
-
-  let successChance = c.success + S.revealedSet.size*0.06;
-  const success = Math.random() < successChance;
-
-  S.history.push({cat:c.cat, actionKey, checked, followed, success, reaction:null});
-  S.pendingChoice.success = success;
-  S.screen='outcome';
-  render();
-}
-
-function applyDelta(ri, ji, cb){
-  const oldRI=S.RI, oldJI=S.JI;
-  if(ri!==undefined) S.RI = Math.max(0, Math.min(100, S.RI+ri));
-  if(ji!==undefined) S.JI = Math.max(0, Math.min(100, S.JI+ji));
-  // stash for popup rendering after DOM exists
-  S._lastDelta = {ri: ri||0, ji: ji||0};
-}
-
-function renderOutcome(){
-  const c = S.pendingCard;
-  const success = S.pendingChoice.success;
-  app.innerHTML = `
-    ${header(true)}
-    <div class="brutal card-panel" style="text-align:center;">
-      <div class="outcome-badge ${success?'success':'fail'}">${success?'✅ 성공':'❌ 실패'}</div>
-      <p style="font-weight:700; font-size:16px;">${success? c.succTxt : c.failTxt}</p>
-      <div class="btn ${success?'lime':'red'} full" onclick="afterOutcome()">${success? '다음으로 →' : '어떻게 받아들일까...'}</div>
-    </div>`;
-  fireGaugeEffects();
-}
-
-function afterOutcome(){
-  if(S.pendingChoice.success){
-    nextTile();
-  } else {
-    S.screen='reaction';
-    render();
-  }
-}
-
-function renderReaction(){
-  app.innerHTML = `
-    ${header(true)}
-    <div class="brutal card-panel">
-      <h2>결과를 어떻게 받아들일까요?</h2>
-      <p class="subtle">결과가 좋지 않았습니다. 이 상황을 뭐라고 말할지가 "책임감 지수"를 바꿉니다.</p>
-      <div class="choicegrid">
-        <div class="btn red" onclick="react('blameAI')">"AI가 시켰다"</div>
-        <div class="btn lime" onclick="react('ownIt')">"내 선택이었다"</div>
-      </div>
-    </div>`;
-}
-
-function react(key){
-  const d = DELTA[key];
-  applyDelta(d.ri, undefined);
-  S.history[S.history.length-1].reaction = key;
-  nextTileWithEffect();
-}
-
-function nextTileWithEffect(){
-  // show a brief gauge-effect screen then move on
-  app.innerHTML = `${header(true)}
-    <div class="brutal card-panel" style="text-align:center;">
-      <p style="font-weight:800; font-size:16px;">지수가 변동했습니다...</p>
-    </div>`;
-  fireGaugeEffects();
-  setTimeout(()=>{ nextTile(); }, 850);
-}
-
-function nextTile(){
-  S.idx++;
-  if(S.idx >= CARDS.length){
-    S.screen='ending';
-  } else {
-    S.screen='board';
-  }
-  render();
-}
-
-function fireGaugeEffects(){
-  const d = S._lastDelta || {ri:0, ji:0};
-  const riTrack = document.getElementById('ri-track');
-  const jiTrack = document.getElementById('ji-track');
-  const riFill = document.getElementById('ri-fill');
-  const jiFill = document.getElementById('ji-fill');
-  if(riFill) riFill.style.width = S.RI + '%';
-  if(jiFill) jiFill.style.width = S.JI + '%';
-  const riVal = document.getElementById('ri-val');
-  const jiVal = document.getElementById('ji-val');
-  if(riVal) riVal.textContent = S.RI;
-  if(jiVal) jiVal.textContent = S.JI;
-
-  [[riTrack, d.ri],[jiTrack, d.ji]].forEach(([track, val])=>{
-    if(!track || !val) return;
-    track.classList.remove('shake','flashpos','flashneg');
-    void track.offsetWidth; // reflow to restart animation
-    track.classList.add(val>0?'flashpos':'flashneg');
-    if(Math.abs(val)>=10) track.classList.add('shake');
-    const pop = document.createElement('div');
-    pop.className = 'popup' + (val<0?' neg':'');
-    pop.textContent = (val>0?'+':'') + val;
-    track.appendChild(pop);
-    setTimeout(()=>pop.remove(), 1150);
+  // 선택지 상태 변경
+  r.choices.forEach((_, i) => {
+    const el = $('cc-' + i);
+    if (!el) return;
+    el.onclick = null;
+    if (i === idx) el.classList.add(c.tag === 'ok' ? 'c-good' : 'c-bad');
+    else           el.classList.add('c-neutral');
   });
-}
 
-/* ---------------- ENDING ---------------- */
-function computeEnding(){
-  const {RI, JI} = S;
-  if(RI<40 && JI<40) return {key:'A', em:'🕳️', title:'외주화 파국 엔딩', color:'var(--red)',
-    text:'모든 결정을 AI에게 맡기고, 결과에 대한 책임도 지지 않았습니다. 편했지만, 어느새 내 삶의 방향을 내가 정하지 못하게 되었습니다.'};
-  if(RI<40 && JI>=60) return {key:'B', em:'🎭', title:'맹목적 순응 엔딩', color:'var(--purple)',
-    text:'AI 추천의 허점을 알아챌 판단력은 있었습니다. 하지만 결과가 나쁠 때마다 "AI가 시켰다"며 책임을 미뤘습니다. 알면서도 회피한 것입니다.'};
-  if(RI>=60 && JI<40) return {key:'C', em:'🌪️', title:'독단적 과신 엔딩', color:'var(--yellow)',
-    text:'결과에 대한 책임은 당당히 졌습니다. 하지만 근거를 따져보지 않고 감으로 밀어붙인 결정이 많았습니다. 용기는 있었지만 성급했습니다.'};
-  if(RI>=60 && JI>=60) return {key:'D', em:'🤝', title:'협력적 판단 엔딩', color:'var(--lime)',
-    text:'AI를 훌륭한 도구로 활용하면서도, 최종 판단과 그 결과에 대한 책임은 스스로 짊어졌습니다. AI와 사람이 함께 만든 가장 균형 잡힌 결말입니다.'};
-  return {key:'E', em:'🌱', title:'성장 진행형 엔딩', color:'var(--cyan)',
-    text:'아직 판단력과 책임감의 균형을 찾아가는 중입니다. 실패가 아니라 진행형입니다 — 다음엔 어떤 선택을 바꿔볼지 생각해봅시다.'};
-}
+  updateGauges();
 
-function renderEnding(){
-  const e = computeEnding();
-  const c = counts();
-  const ch = CHARACTERS.find(x=>x.id===S.charId);
+  const missed = [...new Set(c.missed || [])];
+  const missHTML = missed.length
+    ? `<div style="margin-top:.5rem;font-size:12px">${missTags(missed)}</div>`
+    : `<div style="margin-top:.5rem"><span class="tag tag-ok">기준 충족</span></div>`;
 
-  const reasons = [];
-  reasons.push(`근거를 확인하고 직접 판단한 횟수: <b>${c.checkThink}회</b>`);
-  reasons.push(`근거를 확인하고 AI를 따른 횟수: <b>${c.checkFollow}회</b>`);
-  reasons.push(`근거 없이 AI를 그대로 따른 횟수: <b>${c.skipFollow}회</b>`);
-  reasons.push(`근거 없이 AI를 무시한 횟수: <b>${c.skipThink}회</b>`);
-  reasons.push(`나쁜 결과가 나온 횟수: <b>${c.fails}회</b> 중 "내 탓" <b>${c.ownIt}회</b> / "AI 탓" <b>${c.blameAI}회</b>`);
-  reasons.push(`최종 판정: RI <b>${S.RI}</b> · JI <b>${S.JI}</b> → 기준선(40/60) 대비 ${e.key==='E' ? '중립대' : (S.RI>=60?'RI 높음':'RI 낮음') + ' · ' + (S.JI>=60?'JI 높음':'JI 낮음')}`);
-
-  app.innerHTML = `
-    <div class="brutal endinghero" style="background:${e.color};">
-      <span class="em">${e.em}</span>
-      <h1>${e.title}</h1>
-      <p class="subtle">${ch.em} ${ch.name}의 이야기</p>
-    </div>
-    <div class="brutal card-panel">
-      <p style="font-weight:700; font-size:16px;">${e.text}</p>
-      <div class="statbar">
-        <div class="statbox"><div class="num">${S.RI}</div><div class="lab">책임감 RI</div></div>
-        <div class="statbox"><div class="num">${S.JI}</div><div class="lab">판단력 JI</div></div>
-      </div>
-    </div>
-    <div class="brutal card-panel">
-      <h2>판단 근거</h2>
-      <ul class="reasonlist">
-        ${reasons.map(r=>`<li>${r}</li>`).join('')}
-      </ul>
-    </div>
-    <div class="brutal card-panel">
-      <h2>나만의 AI 윤리 헌장</h2>
-      <p class="subtle">오늘의 경험을 한 줄로 남겨보세요.</p>
-      <textarea id="charter" placeholder="예: AI의 추천은 참고하되, 마지막 결정과 책임은 내가 진다."></textarea>
-      <div class="btn full lime" style="margin-top:12px;" onclick="saveCharter()">저장하고 다시 시작 →</div>
+  $('result-banner').innerHTML = `
+    <div class="result-banner ${c.tag === 'ok' ? 'good' : 'bad'}">
+      <div class="result-title">${c.tag === 'ok' ? '좋은 선택!' : '아쉬운 선택...'}</div>
+      <div class="result-body">${c.result}</div>
+      ${missHTML}
     </div>`;
+
+  $('next-btn').textContent = cur >= ROUNDS.length - 1 ? '결과 보기 →' : '다음 장면 →';
+  $('result-area').style.display = 'block';
 }
 
-function saveCharter(){
-  const val = document.getElementById('charter').value;
-  try{
-    const log = JSON.parse(localStorage.getItem('responsibility_game_log')||'[]');
-    log.push({date:new Date().toISOString(), character:S.charId, RI:S.RI, JI:S.JI, charter:val, history:S.history});
-    localStorage.setItem('responsibility_game_log', JSON.stringify(log));
-  }catch(e){}
-  S = {screen:'intro', charId:null, idx:0, RI:50, JI:50, history:[], pendingCard:null, pendingChoice:{}};
-  render();
+// ── 다음 라운드 ───────────────────────────────────────────────────────────────
+function nextRound() {
+  cur++;
+  if (cur >= ROUNDS.length) { showFinal(); return; }
+  renderDots();
+  renderScene();
 }
 
-function go(screen){ S.screen=screen; render(); }
+// ── 최종 결과 ─────────────────────────────────────────────────────────────────
+function showFinal() {
+  const bp    = Math.max(0, Math.round(budget  / BUDGET_MAX  * 100));
+  const sp    = Math.round(satisfy / SATISFY_MAX * 100);
+  const score = Math.round((satisfy / SATISFY_MAX) * 50 + (budget / BUDGET_MAX) * 50);
 
-render();
+  $('f-budget').textContent     = budget.toLocaleString() + '원';
+  $('f-satisfy').textContent    = satisfy + ' / ' + SATISFY_MAX + '점';
+  $('f-budget-bar').style.width = bp + '%';
+  $('f-satisfy-bar').style.width = sp + '%';
+  $('final-score').textContent  = score + '점';
+
+  const msgs = [
+    '아직 합리적 선택이 어렵네요. 어떤 기준을 놓쳤는지 돌아볼까요?',
+    '절반은 잘 했어요! 어떤 장면이 가장 아쉬웠나요?',
+    '꽤 합리적인 소비자예요! 조금만 더 기준을 따지면 완벽해요.',
+    '훌륭해요! 예산도 지키고 만족도도 높였어요.',
+  ];
+  const mi = score < 40 ? 0 : score < 60 ? 1 : score < 80 ? 2 : 3;
+  $('final-sub').textContent = msgs[mi];
+
+  const t = TITLES.find(t => score >= t.min) || TITLES[TITLES.length - 1];
+  $('title-badge').innerHTML = `
+    <div class="title-badge-inner" style="background:${t.bg};border-color:${t.border};color:${t.color}">
+      ${t.icon} ${t.label}
+    </div>`;
+
+  $('timeline').innerHTML = history.map(h => {
+    const missed = [...new Set(h.choice.missed || [])];
+    return `
+      <div class="timeline-row">
+        <div class="tl-icon ${h.choice.tag === 'ok' ? 'tl-ok' : 'tl-bad'}">${h.icon}</div>
+        <div style="flex:1">
+          <div class="tl-name">${h.choice.name}</div>
+          <div class="tl-meta">지출 ${h.cost.toLocaleString()}원 · 만족 +${h.choice.sat}</div>
+          <div class="tl-tags">${missed.length ? missTags(missed) : '<span class="tag tag-ok">기준 충족</span>'}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  const lessons = [
+    '가격·품질·디자인·필요성 — 네 기준을 함께 따질수록 후회가 줄어요. 특히 "꼭 필요한가?"를 먼저 묻는 습관이 중요해요.',
+    '합리적 선택이란 가장 비싼 것도 가장 싼 것도 아니에요. 내 상황에서 여러 기준을 균형 있게 고려하는 것이 핵심이에요.',
+    '예산을 아끼면서 만족도를 높이는 것이 합리적 선택의 핵심이에요. 다음 시간엔 나만의 선택 기준을 직접 세워볼 거예요!',
+  ];
+  $('lesson').textContent = lessons[mi < 2 ? 0 : mi === 2 ? 1 : 2];
+
+  show('s-final');
+}
+
+// ── 게임 시작/리셋 ─────────────────────────────────────────────────────────────
+function startGame() {
+  cur = 0; budget = BUDGET_MAX; satisfy = 0; history = [];
+  show('s-game');
+  renderDots();
+  renderScene();
+  updateGauges();
+}
+
+function resetGame() {
+  cur = 0; budget = BUDGET_MAX; satisfy = 0; history = [];
+  show('s-intro');
+}
 </script>
 </body>
 </html>
