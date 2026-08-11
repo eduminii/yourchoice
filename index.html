@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>민준이의 하루 — 합리적 선택 시뮬레이션</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --font-sans: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+      --bg:          #ffffff;
+      --bg-sec:      #f5f5f4;
+      --bg-ter:      #e7e5e4;
+      --text:        #1c1917;
+      --text-sec:    #57534e;
+      --text-ter:    #a8a29e;
+      --border:      #d6d3d1;
+      --border-sec:  #a8a29e;
+      --radius-sm:   6px;
+      --radius-md:   10px;
+      --radius-lg:   14px;
+      --blue:        #185FA5;
+      --blue-light:  #E6F1FB;
+      --green:       #3B6D11;
+      --green-light: #EAF3DE;
+      --red:         #A32D2D;
+      --red-light:   #FCEBEB;
+      --amber:       #854F0B;
+      --amber-light: #FAEEDA;
+      --purple:      #534AB7;
+      --purple-light:#EEEDFE;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg-sec);
+      color: var(--text);
+      min-height: 100dvh;
+      display: flex;
+      justify-content: center;
+      padding: 1.5rem 1rem 3rem;
+    }
+
+    .wrap {
+      width: 100%;
+      max-width: 640px;
+      position: relative;
+    }
+
+    /* ── screens ── */
+    .scr { display: none; }
+    .scr.on { display: block; }
+
+    /* ── card ── */
+    .card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: .875rem;
+    }
+
+    /* ── buttons ── */
+    .btn {
+      display: block;
+      width: 100%;
+      padding: .75rem 1.5rem;
+      font-family: var(--font-sans);
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: background .15s, opacity .15s;
+      text-align: center;
+      border: none;
+    }
+    .btn-primary { background: var(--blue); color: var(--blue-light); }
+    .btn-primary:hover { opacity: .88; }
+    .btn-sec { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+    .btn-sec:hover { background: var(--bg-sec); }
+    .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 1rem; }
+
+    /* ── gauge ── */
+    .gauge-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1rem; }
+    .gauge-box { background: var(--bg-sec); border-radius: var(--radius-md); padding: .75rem 1rem; }
+    .gauge-label { font-size: 12px; color: var(--text-sec); margin-bottom: 6px; display: flex; justify-content: space-between; }
+    .gauge-val { font-weight: 600; color: var(--text); }
+    .gauge-track { height: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 5px; overflow: hidden; }
+    .gauge-fill { height: 10px; border-radius: 5px; transition: width .55s cubic-bezier(.4,0,.2,1); }
+    .gauge-budget { background: #378ADD; }
+    .gauge-satisfy { background: #639922; }
+
+    /* ── step dots ── */
+    .dots { display: flex; gap: 6px; justify-content: center; margin-bottom: 1.25rem; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bg-ter); border: 1px solid var(--border); transition: all .2s; }
+    .dot.done { background: #378ADD; border-color: #378ADD; }
+    .dot.cur  { width: 20px; border-radius: 4px; background: var(--blue); border-color: var(--blue); }
+
+    /* ── scene header ── */
+    .scene-header { display: flex; align-items: center; gap: 12px; margin-bottom: 1rem; }
+    .scene-icon { width: 48px; height: 48px; border-radius: var(--radius-md); background: var(--bg-sec); display: flex; align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0; }
+    .scene-num  { font-size: 12px; color: var(--text-ter); margin-bottom: 2px; }
+    .scene-title { font-size: 16px; font-weight: 600; }
+    .scene-story { font-size: 14px; color: var(--text-sec); line-height: 1.7; background: var(--bg-sec); border-radius: var(--radius-md); padding: .75rem 1rem; margin-bottom: 1rem; }
+    .choice-hint { font-size: 13px; font-weight: 500; color: var(--text-sec); margin-bottom: .5rem; }
+
+    /* ── choice cards ── */
+    .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .c-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1rem;
+      cursor: pointer;
+      position: relative;
+      transition: border-color .15s, background .15s;
+    }
+    .c-card:hover:not(.c-disabled):not(.c-good):not(.c-bad):not(.c-neutral) {
+      border-color: var(--border-sec);
+      background: var(--bg-sec);
+    }
+    .c-card.c-disabled { opacity: .35; cursor: not-allowed; background: var(--bg-sec); }
+    .c-card.c-good     { border: 2px solid var(--green); background: var(--green-light); pointer-events: none; }
+    .c-card.c-bad      { border: 2px solid var(--red);   background: var(--red-light);   pointer-events: none; }
+    .c-card.c-neutral  { opacity: .4; pointer-events: none; }
+
+    .c-badge-no { position: absolute; top: 8px; right: 8px; background: var(--red-light); color: var(--red); font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: var(--radius-sm); }
+    .c-num   { font-size: 11px; font-weight: 600; color: var(--text-ter); margin-bottom: 5px; }
+    .c-name  { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 3px; line-height: 1.4; }
+    .c-price { font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+
+    /* ── attr bars ── */
+    .attrs { display: flex; flex-direction: column; gap: 4px; }
+    .attr-row { display: flex; align-items: center; gap: 6px; }
+    .attr-lbl { font-size: 11px; width: 36px; flex-shrink: 0; }
+    .attr-track { flex: 1; height: 5px; background: var(--bg-sec); border-radius: 3px; overflow: hidden; }
+    .attr-bar { height: 5px; border-radius: 3px; }
+
+    /* ── result banner ── */
+    .result-banner { border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: .875rem; }
+    .result-banner.good { background: var(--green-light); border: 1px solid #97C459; }
+    .result-banner.bad  { background: var(--red-light);   border: 1px solid #F09595; }
+    .result-title { font-size: 15px; font-weight: 600; margin-bottom: .375rem; }
+    .good .result-title { color: var(--green); }
+    .bad  .result-title { color: var(--red); }
+    .result-body { font-size: 13px; line-height: 1.7; }
+    .good .result-body { color: #3B6D11; }
+    .bad  .result-body { color: var(--red); }
+
+    /* ── tags ── */
+    .tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: var(--radius-sm); margin: 2px; }
+    .tag-miss { background: #F7C1C1; color: var(--red); }
+    .tag-ok   { background: #C0DD97; color: var(--green); }
+
+    /* ── floating text ── */
+    .float-txt {
+      position: absolute;
+      pointer-events: none;
+      font-size: 14px;
+      font-weight: 600;
+      z-index: 9999;
+      white-space: nowrap;
+      transition: transform .9s ease-out, opacity .9s ease-out;
+    }
+
+    /* ── final screen ── */
+    .final-score { font-size: 52px; font-weight: 700; text-align: center; margin: 1rem 0 .25rem; }
+    .final-sub   { font-size: 14px; color: var(--text-sec); text-align: center; margin-bottom: .75rem; }
+    .title-badge { display: flex; justify-content: center; margin-bottom: 1.5rem; }
+    .title-badge-inner { padding: .6rem 1.5rem; border-radius: var(--radius-lg); font-size: 16px; font-weight: 700; border: 2px solid; }
+
+    .timeline-row { display: flex; gap: 10px; padding: .75rem 0; border-bottom: 1px solid var(--border); align-items: flex-start; }
+    .timeline-row:last-child { border: none; }
+    .tl-icon { width: 36px; height: 36px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .tl-ok  { background: var(--green-light); }
+    .tl-bad { background: var(--red-light); }
+    .tl-name  { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+    .tl-meta  { font-size: 12px; color: var(--text-sec); }
+    .tl-tags  { margin-top: 3px; }
+
+    .lesson-box { background: var(--bg-sec); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-top: .875rem; }
+    .lesson-label { font-size: 12px; font-weight: 600; color: var(--text-sec); margin-bottom: .5rem; }
+    .lesson-body  { font-size: 14px; line-height: 1.8; }
+
+    /* ── discussion screen ── */
+    .q-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: .75rem; }
+    .q-num { display: inline-block; background: var(--blue-light); color: var(--blue); font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: var(--radius-sm); margin-bottom: .5rem; }
+    .q-text { font-size: 15px; font-weight: 600; line-height: 1.6; margin-bottom: .5rem; }
+    .q-hint { font-size: 13px; color: var(--text-sec); line-height: 1.7; }
+    .teacher-box { background: var(--bg-sec); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem; }
+
+    /* ── intro badges ── */
+    .intro-stats { display: flex; justify-content: center; gap: 2rem; margin-bottom: 1.5rem; }
+    .stat-val { font-size: 22px; font-weight: 700; text-align: center; }
+    .stat-lbl { font-size: 12px; color: var(--text-sec); text-align: center; }
+    .stat-div { width: 1px; background: var(--border); }
+    .criteria-row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem; }
+    .cr-badge { font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: var(--radius-md); }
+
+    @media (max-width: 480px) {
+      body { padding: 1rem .75rem 2rem; }
+      .choice-grid { grid-template-columns: 1fr; }
+      .btn-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap" id="wrap">
+
+  <!-- ── 인트로 ── -->
+  <div id="s-intro" class="scr on">
+    <div style="text-align:center;padding:2rem 0 1.5rem">
+      <div style="font-size:13px;color:var(--text-sec);margin-bottom:.5rem">4학년 사회 · 합리적 선택</div>
+      <h1 style="font-size:24px;font-weight:700;margin-bottom:.625rem">민준이의 하루</h1>
+      <p style="font-size:14px;color:var(--text-sec);line-height:1.7;max-width:400px;margin:0 auto 1.5rem">
+        오늘 민준이에게는 선택의 순간이 5번 찾아와요.<br>
+        예산을 아끼면서도 만족도를 높일 수 있을까요?
+      </p>
+      <div class="intro-stats">
+        <div><div class="stat-val">5</div><div class="stat-lbl">라운드</div></div>
+        <div class="stat-div"></div>
+        <div><div class="stat-val">5,000원</div><div class="stat-lbl">시작 예산</div></div>
+        <div class="stat-div"></div>
+        <div><div class="stat-val">4가지</div><div class="stat-lbl">선택 기준</div></div>
+      </div>
+      <div class="criteria-row">
+        <span class="cr-badge" style="background:var(--blue-light);color:var(--blue)">가격</span>
+        <span class="cr-badge" style="background:var(--green-light);color:var(--green)">품질</span>
+        <span class="cr-badge" style="background:var(--amber-light);color:var(--amber)">디자인</span>
+        <span class="cr-badge" style="background:var(--purple-light);color:var(--purple)">필요성</span>
+      </div>
+      <div style="font-size:12px;color:var(--text-ter);margin-bottom:1.75rem">어떤 칭호를 받게 될까요?</div>
+      <button class="btn btn-primary" style="max-width:200px;margin:0 auto" onclick="startGame()">게임 시작</button>
+    </div>
+  </div>
+
+  <!-- ── 게임 ── -->
+  <div id="s-game" class="scr">
+    <div class="gauge-wrap">
+      <div class="gauge-box">
+        <div class="gauge-label"><span>남은 예산</span><span class="gauge-val" id="budget-txt">5,000원</span></div>
+        <div class="gauge-track"><div class="gauge-fill gauge-budget" id="budget-bar" style="width:100%"></div></div>
+      </div>
+      <div class="gauge-box">
+        <div class="gauge-label"><span>만족도</span><span class="gauge-val" id="satisfy-txt">0점</span></div>
+        <div class="gauge-track"><div class="gauge-fill gauge-satisfy" id="satisfy-bar" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="dots" id="dots"></div>
+    <div id="scene-area"></div>
+    <div id="result-area" style="display:none">
+      <div id="result-banner"></div>
+      <button class="btn btn-primary" id="next-btn" onclick="nextRound()">다음 장면 →</button>
+    </div>
+  </div>
+
+  <!-- ── 결과 ── -->
+  <div id="s-final" class="scr">
+    <div class="final-score" id="final-score"></div>
+    <div class="final-sub" id="final-sub"></div>
+    <div class="title-badge" id="title-badge"></div>
+    <div class="gauge-wrap">
+      <div class="gauge-box">
+        <div class="gauge-label"><span>최종 예산</span><span class="gauge-val" id="f-budget"></span></div>
+        <div class="gauge-track"><div class="gauge-fill gauge-budget" id="f-budget-bar"></div></div>
+      </div>
+      <div class="gauge-box">
+        <div class="gauge-label"><span>최종 만족도</span><span class="gauge-val" id="f-satisfy"></span></div>
+        <div class="gauge-track"><div class="gauge-fill gauge-satisfy" id="f-satisfy-bar"></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-size:14px;font-weight:600;margin-bottom:.75rem">민준이의 하루 돌아보기</div>
+      <div id="timeline"></div>
+    </div>
+    <div class="lesson-box">
+      <div class="lesson-label">오늘의 배움</div>
+      <div class="lesson-body" id="lesson"></div>
+    </div>
+    <div class="btn-grid">
+      <button class="btn btn-sec" onclick="resetGame()">다시 하기</button>
+      <button class="btn btn-primary" onclick="show('s-discussion')">모둠 토의 질문 보기</button>
+    </div>
+  </div>
+
+  <!-- ── 모둠 토의 ── -->
+  <div id="s-discussion" class="scr">
+    <div style="margin-bottom:1.25rem">
+      <div style="font-size:13px;color:var(--text-sec);margin-bottom:.375rem">게임 후 모둠 토의</div>
+      <div style="font-size:18px;font-weight:700">친구들과 이야기 나눠요</div>
+    </div>
+
+    <div class="q-card">
+      <div class="q-num">발문 1 — 경험 나누기</div>
+      <div class="q-text">"어느 장면에서 가장 후회스러운 선택을 했나요? 왜 그 선택이 아쉬웠나요?"</div>
+      <div class="q-hint">게임 결과 타임라인을 보며 자신의 선택을 돌아봅니다. 모둠원끼리 서로 다른 장면에서 후회한 이유를 비교해 보세요.</div>
+    </div>
+    <div class="q-card">
+      <div class="q-num">발문 2 — 기준 찾기</div>
+      <div class="q-text">"후회한 선택에서 어떤 기준이 빠져 있었나요? 가격·품질·디자인·필요성 중 무엇을 놓쳤나요?"</div>
+      <div class="q-hint">놓친 기준 태그(빨간색)를 확인하고, 모둠에서 가장 자주 놓친 기준이 무엇인지 이야기해 봅니다.</div>
+    </div>
+    <div class="q-card">
+      <div class="q-num">발문 3 — 개념 연결</div>
+      <div class="q-text">"합리적 선택을 하지 않으면 어떤 문제가 생길까요? 게임에서 경험한 것을 바탕으로 말해봐요."</div>
+      <div class="q-hint">예산 게이지 감소와 만족도 저하 경험을 연결하여 생각합니다.</div>
+    </div>
+    <div class="q-card">
+      <div class="q-num">발문 4 — 다음 차시 연결</div>
+      <div class="q-text">"다음에 비슷한 상황이 생긴다면, 어떤 순서로 기준을 따져볼 건가요?"</div>
+      <div class="q-hint">다음 차시 '합리적 선택의 기준 세우기'로 자연스럽게 이어지는 질문입니다.</div>
+    </div>
+
+    <div class="teacher-box">
+      <div style="font-size:12px;font-weight:600;color:var(--text-sec);margin-bottom:.5rem">교사 정리 발문</div>
+      <div style="font-size:14px;line-height:1.8">
+        "여러 기준을 고려해서 선택하면 어떤 점이 좋을까요?"<br>
+        → 돈과 자원을 낭비하지 않고 더 큰 만족을 얻을 수 있다.
+      </div>
+    </div>
+
+    <button class="btn btn-sec" onclick="show('s-final')">결과 화면으로 돌아가기</button>
+  </div>
+
+</div><!-- /wrap -->
+
+<script>
+// ── 상수 ──────────────────────────────────────────────────────────────────────
+const BUDGET_MAX  = 5000;
+const SATISFY_MAX = 15;
+
+// ── 칭호 ──────────────────────────────────────────────────────────────────────
+const TITLES = [
+  { min: 85, label: '합리적 소비 마스터',  icon: '👑', bg: '#FAEEDA', border: '#BA7517', color: '#633806' },
+  { min: 65, label: '꼼꼼한 소비자',        icon: '🔍', bg: '#EAF3DE', border: '#3B6D11', color: '#27500A' },
+  { min: 45, label: '아쉬운 짠돌이',        icon: '👛', bg: '#E6F1FB', border: '#185FA5', color: '#0C447C' },
+  { min: 25, label: '충동구매 위험 신호',    icon: '⚠️', bg: '#FAEEDA', border: '#854F0B', color: '#633806' },
+  { min:  0, label: '위험한 충동구매러',     icon: '💸', bg: '#FCEBEB', border: '#A32D2D', color: '#791F1F' },
+];
+
+// ── 라운드 데이터 ──────────────────────────────────────────────────────────────
+const ROUNDS = [
+  {
+    icon: '✏️', title: '아침 — 학용품 코너에서',
+    story: '오늘 준비물로 공책이 필요해요. 문구점 선반에 공책 4종류가 있어요.',
+    choices: [
+      { name: '500원짜리 민무늬 공책',    p:5,q:2,d:1,n:4, cost:500,  sat:2, tag:'ok',  result:'필요한 공책을 싸게 샀어요! 필요성과 가격 기준을 잘 고려했어요.', missed:[] },
+      { name: '1,200원 캐릭터 공책',      p:2,q:3,d:5,n:4, cost:1200, sat:3, tag:'ok',  result:'귀엽고 품질도 나쁘지 않아요. 비슷한 품질의 공책보다 700원 더 썼어요.', missed:['가격'] },
+      { name: '2,500원 고급 스프링 공책', p:1,q:5,d:4,n:4, cost:2500, sat:2, tag:'bad', result:'품질은 최고지만 필기용 공책 치고는 너무 비쌌어요. 나중에 예산이 부족해질 수 있어요.', missed:['가격','필요성'] },
+      { name: '300원 낱장 메모지',        p:5,q:1,d:1,n:1, cost:300,  sat:0, tag:'bad', result:'가장 싸지만 공책이 아니라 필기가 불편해요. 필요성을 확인하지 않았어요.', missed:['품질','필요성'] },
+    ],
+  },
+  {
+    icon: '🍱', title: '점심 — 분식집 메뉴 선택',
+    story: '학교 끝나고 분식집에 왔어요. 배도 고프고 메뉴를 고르기가 어렵네요.',
+    choices: [
+      { name: '김밥 (1,500원)',        p:4,q:3,d:2,n:4, cost:1500, sat:3, tag:'ok',  result:'배도 부르고 가격도 적당해요. 필요성과 가격을 잘 따진 합리적 선택이에요!', missed:[] },
+      { name: '라볶이 (2,000원)',      p:3,q:4,d:3,n:3, cost:2000, sat:4, tag:'ok',  result:'맛있고 배도 든든해요. 조금 비싸지만 만족도가 높아요.', missed:[] },
+      { name: '돈까스 세트 (4,500원)', p:1,q:5,d:5,n:3, cost:4500, sat:3, tag:'bad', result:'맛있지만 거의 전 재산을 점심에 다 써버렸어요! 이후 선택이 어려워져요.', missed:['가격','필요성'] },
+      { name: '500원 사탕',            p:5,q:1,d:2,n:1, cost:500,  sat:0, tag:'bad', result:'가장 싸지만 밥 대신 사탕은 배가 안 차요. 필요성을 생각하지 않은 선택이에요.', missed:['품질','필요성'] },
+    ],
+  },
+  {
+    icon: '🎮', title: '오후 — 앱 스토어에서',
+    story: '친구들이 다 한다는 게임 앱이 있어요. 아이템 구매 옵션이 4가지예요.',
+    choices: [
+      { name: '무료 기본 버전',      p:5,q:2,d:3,n:3, cost:0,    sat:2, tag:'ok',  result:'돈을 전혀 쓰지 않았어요! 기능이 제한되지만 예산을 아꼈어요.', missed:[] },
+      { name: '500원 스타터팩',      p:4,q:3,d:3,n:3, cost:500,  sat:3, tag:'ok',  result:'적은 돈으로 기본 아이템을 얻었어요. 가격과 필요성을 균형 있게 고려했어요.', missed:[] },
+      { name: '1,500원 프리미엄팩',  p:2,q:5,d:5,n:2, cost:1500, sat:2, tag:'bad', result:'아이템이 화려하지만 게임을 자주 안 한다면 불필요한 지출이에요.', missed:['필요성','가격'] },
+      { name: '3,000원 최고급 세트', p:1,q:5,d:5,n:1, cost:3000, sat:1, tag:'bad', result:'멋진 아이템이지만 게임 앱에 3,000원은 과소비예요.', missed:['가격','필요성'] },
+    ],
+  },
+  {
+    icon: '🎁', title: '저녁 — 친구 생일 선물',
+    story: '내일 친구 생일이에요! 예산 범위 안에서 선물을 골라야 해요.',
+    choices: [
+      { name: '문구 세트',             p:4,q:3,d:3,n:5, costFn: b=>Math.min(b,1500), sat:4, tag:'ok',  result:'예산 안에서 꼭 필요한 선물을 골랐어요! 필요성과 가격 모두 고려한 선택이에요.', missed:[],             minBudget:1000 },
+      { name: '1,000원 사탕 묶음',    p:5,q:2,d:2,n:3, cost:1000,                   sat:2, tag:'ok',  result:'가장 저렴하게 해결했어요. 선물로는 좀 아쉽지만 가격 기준을 잘 지켰어요.',  missed:['품질','디자인'] },
+      { name: '화려한 캐릭터 피규어', p:1,q:5,d:5,n:2, costFn: b=>b,               sat:1, tag:'bad', result:'남은 돈을 몽땅 썼어요! 친구가 좋아할지도 불확실하고 빈 지갑이 됐어요.',      missed:['가격','필요성'], minBudget:2000 },
+      { name: '직접 만든 카드 (무료)', p:5,q:2,d:3,n:4, cost:0,                      sat:3, tag:'ok',  result:'돈을 아끼면서 정성을 담았어요! 꼭 돈을 써야 좋은 선물은 아니에요.',          missed:[] },
+    ],
+  },
+  {
+    icon: '🏪', title: '귀갓길 — 편의점 간식',
+    story: '집에 가는 길에 배가 고파요. 편의점에서 간식을 살까요?',
+    choices: [
+      { name: '그냥 집에 간다',            p:5,q:3,d:2,n:2, cost:0,    sat:2, tag:'ok',  result:'참을 수 있었어요! 불필요한 지출을 줄이는 것도 합리적 선택이에요.', missed:[] },
+      { name: '700원 삼각김밥',            p:4,q:3,d:2,n:4, cost:700,  sat:3, tag:'ok',  result:'필요한 만큼만 적당히 샀어요. 가격과 필요성을 잘 따졌어요!', missed:[] },
+      { name: '1,800원 도시락',            p:2,q:4,d:3,n:2, cost:1800, sat:2, tag:'bad', result:'집에 가면 저녁을 먹을 텐데 너무 많이 샀어요. 필요성을 생각하지 않았어요.', missed:['필요성','가격'] },
+      { name: '남은 돈 다 털어 과자 잔뜩', p:1,q:3,d:4,n:1, costFn: b=>b, sat:1, tag:'bad', result:'마지막에 남은 돈을 충동적으로 다 써버렸어요.', missed:['필요성','가격'], minBudget:700 },
+    ],
+  },
+];
+
+// ── 상태 ──────────────────────────────────────────────────────────────────────
+let cur = 0, budget = BUDGET_MAX, satisfy = 0, history = [], locked = false;
+
+// ── 유틸 ──────────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+function show(id) {
+  document.querySelectorAll('.scr').forEach(s => s.classList.remove('on'));
+  $(id).classList.add('on');
+}
+
+function getCost(c) { return c.costFn ? c.costFn(budget) : (c.cost || 0); }
+function isDisabled(c) {
+  if (c.minBudget !== undefined && budget < c.minBudget) return true;
+  return getCost(c) > budget;
+}
+
+function updateGauges() {
+  const bp = Math.max(0, Math.round(budget / BUDGET_MAX * 100));
+  const sp = Math.round(satisfy / SATISFY_MAX * 100);
+  $('budget-bar').style.width  = bp + '%';
+  $('satisfy-bar').style.width = sp + '%';
+  $('budget-txt').textContent  = budget.toLocaleString() + '원';
+  $('satisfy-txt').textContent = satisfy + '점';
+}
+
+function renderDots() {
+  $('dots').innerHTML = ROUNDS.map((_, i) =>
+    `<div class="dot${i < cur ? ' done' : i === cur ? ' cur' : ''}"></div>`
+  ).join('');
+}
+
+function missTags(missed) {
+  return missed.map(m => `<span class="tag tag-miss">${m}</span>`).join('');
+}
+
+// ── 장면 렌더 ─────────────────────────────────────────────────────────────────
+function renderScene() {
+  const r = ROUNDS[cur];
+  locked = false;
+  $('result-area').style.display = 'none';
+
+  const choiceHTML = r.choices.map((c, i) => {
+    const off = isDisabled(c);
+    const cost = getCost(c);
+    const priceColor = off ? 'var(--red)' : 'var(--text-sec)';
+    const priceLabel = cost === 0 ? '무료' : cost.toLocaleString() + '원';
+    const bars = [
+      { lbl: '가격', val: c.p, color: '#378ADD' },
+      { lbl: '품질', val: c.q, color: '#639922' },
+      { lbl: '디자인', val: c.d, color: '#EF9F27' },
+      { lbl: '필요성', val: c.n, color: '#7F77DD' },
+    ];
+    return `
+      <div class="c-card${off ? ' c-disabled' : ''}" id="cc-${i}" ${off ? '' : `onclick="pick(${i},event)"`}>
+        ${off ? '<div class="c-badge-no">예산 부족</div>' : ''}
+        <div class="c-num">${['①','②','③','④'][i]}</div>
+        <div class="c-name">${c.name}</div>
+        <div class="c-price" style="color:${priceColor}">${priceLabel}</div>
+        <div class="attrs">
+          ${bars.map(b => `
+            <div class="attr-row">
+              <div class="attr-lbl" style="color:${b.color}">${b.lbl}</div>
+              <div class="attr-track"><div class="attr-bar" style="width:${b.val/5*100}%;background:${b.color}"></div></div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }).join('');
+
+  $('scene-area').innerHTML = `
+    <div class="scene-header">
+      <div class="scene-icon">${r.icon}</div>
+      <div>
+        <div class="scene-num">장면 ${cur + 1} / ${ROUNDS.length}</div>
+        <div class="scene-title">${r.title}</div>
+      </div>
+    </div>
+    <div class="scene-story">${r.story}</div>
+    <div class="choice-hint">무엇을 선택할까요?</div>
+    <div class="choice-grid">${choiceHTML}</div>`;
+}
+
+// ── 플로팅 텍스트 ─────────────────────────────────────────────────────────────
+function spawnFloat(x, y, costTxt, satTxt) {
+  const wrap = $('wrap');
+  const rect = wrap.getBoundingClientRect();
+  const make = (txt, color, ox) => {
+    const el = document.createElement('div');
+    el.className = 'float-txt';
+    el.textContent = txt;
+    el.style.color = color;
+    el.style.left  = (x - rect.left + ox) + 'px';
+    el.style.top   = (y - rect.top - 10) + 'px';
+    wrap.appendChild(el);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      el.style.transform = 'translateY(-52px)';
+      el.style.opacity   = '0';
+    }));
+    setTimeout(() => el.remove(), 960);
+  };
+  if (costTxt) make(costTxt, 'var(--red)',   -36);
+  if (satTxt)  make(satTxt,  'var(--green)',  18);
+}
+
+// ── 선택 ──────────────────────────────────────────────────────────────────────
+function pick(idx, event) {
+  if (locked) return;
+  const r = ROUNDS[cur];
+  const c = r.choices[idx];
+  if (isDisabled(c)) return;
+  locked = true;
+
+  const actualCost = Math.min(getCost(c), budget);
+  budget  = Math.max(0, budget - actualCost);
+  satisfy += c.sat;
+  history.push({ icon: r.icon, choice: c, cost: actualCost });
+
+  // 플로팅 텍스트
+  if (event) {
+    const rect = $('wrap').getBoundingClientRect();
+    spawnFloat(
+      event.clientX - rect.left,
+      event.clientY - rect.top,
+      actualCost > 0 ? '-' + actualCost.toLocaleString() + '원' : null,
+      c.sat > 0      ? '만족도 +' + c.sat : null,
+    );
+  }
+
+  // 선택지 상태 변경
+  r.choices.forEach((_, i) => {
+    const el = $('cc-' + i);
+    if (!el) return;
+    el.onclick = null;
+    if (i === idx) el.classList.add(c.tag === 'ok' ? 'c-good' : 'c-bad');
+    else           el.classList.add('c-neutral');
+  });
+
+  updateGauges();
+
+  const missed = [...new Set(c.missed || [])];
+  const missHTML = missed.length
+    ? `<div style="margin-top:.5rem;font-size:12px">${missTags(missed)}</div>`
+    : `<div style="margin-top:.5rem"><span class="tag tag-ok">기준 충족</span></div>`;
+
+  $('result-banner').innerHTML = `
+    <div class="result-banner ${c.tag === 'ok' ? 'good' : 'bad'}">
+      <div class="result-title">${c.tag === 'ok' ? '좋은 선택!' : '아쉬운 선택...'}</div>
+      <div class="result-body">${c.result}</div>
+      ${missHTML}
+    </div>`;
+
+  $('next-btn').textContent = cur >= ROUNDS.length - 1 ? '결과 보기 →' : '다음 장면 →';
+  $('result-area').style.display = 'block';
+}
+
+// ── 다음 라운드 ───────────────────────────────────────────────────────────────
+function nextRound() {
+  cur++;
+  if (cur >= ROUNDS.length) { showFinal(); return; }
+  renderDots();
+  renderScene();
+}
+
+// ── 최종 결과 ─────────────────────────────────────────────────────────────────
+function showFinal() {
+  const bp    = Math.max(0, Math.round(budget  / BUDGET_MAX  * 100));
+  const sp    = Math.round(satisfy / SATISFY_MAX * 100);
+  const score = Math.round((satisfy / SATISFY_MAX) * 50 + (budget / BUDGET_MAX) * 50);
+
+  $('f-budget').textContent     = budget.toLocaleString() + '원';
+  $('f-satisfy').textContent    = satisfy + ' / ' + SATISFY_MAX + '점';
+  $('f-budget-bar').style.width = bp + '%';
+  $('f-satisfy-bar').style.width = sp + '%';
+  $('final-score').textContent  = score + '점';
+
+  const msgs = [
+    '아직 합리적 선택이 어렵네요. 어떤 기준을 놓쳤는지 돌아볼까요?',
+    '절반은 잘 했어요! 어떤 장면이 가장 아쉬웠나요?',
+    '꽤 합리적인 소비자예요! 조금만 더 기준을 따지면 완벽해요.',
+    '훌륭해요! 예산도 지키고 만족도도 높였어요.',
+  ];
+  const mi = score < 40 ? 0 : score < 60 ? 1 : score < 80 ? 2 : 3;
+  $('final-sub').textContent = msgs[mi];
+
+  const t = TITLES.find(t => score >= t.min) || TITLES[TITLES.length - 1];
+  $('title-badge').innerHTML = `
+    <div class="title-badge-inner" style="background:${t.bg};border-color:${t.border};color:${t.color}">
+      ${t.icon} ${t.label}
+    </div>`;
+
+  $('timeline').innerHTML = history.map(h => {
+    const missed = [...new Set(h.choice.missed || [])];
+    return `
+      <div class="timeline-row">
+        <div class="tl-icon ${h.choice.tag === 'ok' ? 'tl-ok' : 'tl-bad'}">${h.icon}</div>
+        <div style="flex:1">
+          <div class="tl-name">${h.choice.name}</div>
+          <div class="tl-meta">지출 ${h.cost.toLocaleString()}원 · 만족 +${h.choice.sat}</div>
+          <div class="tl-tags">${missed.length ? missTags(missed) : '<span class="tag tag-ok">기준 충족</span>'}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  const lessons = [
+    '가격·품질·디자인·필요성 — 네 기준을 함께 따질수록 후회가 줄어요. 특히 "꼭 필요한가?"를 먼저 묻는 습관이 중요해요.',
+    '합리적 선택이란 가장 비싼 것도 가장 싼 것도 아니에요. 내 상황에서 여러 기준을 균형 있게 고려하는 것이 핵심이에요.',
+    '예산을 아끼면서 만족도를 높이는 것이 합리적 선택의 핵심이에요. 다음 시간엔 나만의 선택 기준을 직접 세워볼 거예요!',
+  ];
+  $('lesson').textContent = lessons[mi < 2 ? 0 : mi === 2 ? 1 : 2];
+
+  show('s-final');
+}
+
+// ── 게임 시작/리셋 ─────────────────────────────────────────────────────────────
+function startGame() {
+  cur = 0; budget = BUDGET_MAX; satisfy = 0; history = [];
+  show('s-game');
+  renderDots();
+  renderScene();
+  updateGauges();
+}
+
+function resetGame() {
+  cur = 0; budget = BUDGET_MAX; satisfy = 0; history = [];
+  show('s-intro');
+}
+</script>
+</body>
+</html>
